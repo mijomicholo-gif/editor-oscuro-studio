@@ -117,8 +117,11 @@ $("folderBtn").addEventListener("click",()=>{const input=$("mediaInput");input.s
 $("mediaInput").addEventListener("change",e=>{importMedia(e.target.files);e.target.value="";e.target.removeAttribute("webkitdirectory");});
 $("audioBtn").addEventListener("click",()=> $("audioInput").click());
 $("audioInput").addEventListener("change",e=>{handleAudio(e.target.files[0]);e.target.value="";});
-$("txtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.textLines=(await f.text()).split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean);$("syncStatus").textContent=`${state.textLines.length} líneas de escenas cargadas.`;toast("Texto de escenas cargado.");e.target.value="";});
-$("srtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.cues=parseSRT(await f.text());$("syncStatus").textContent=`${state.cues.length} subtítulos detectados${state.textLines.length?" · TXT cargado":""}.`;renderTracks();toast(state.cues.length?"Subtítulos SRT cargados.":"No se encontraron subtítulos válidos.");e.target.value="";});
+$("txtBtn").addEventListener("click",()=> $("txtInput").click());
+$("srtBtn").addEventListener("click",()=> $("srtInput").click());
+function updateSyncStatus(){const parts=[];if(state.textName)parts.push(`TXT: ${state.textLines.length} escenas`);if(state.srtName)parts.push(`SRT: ${state.cues.length} subtítulos`);$("syncStatus").textContent=parts.length?parts.join(" · "):"Sin archivos de sincronización.";} 
+$("txtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.textLines=(await f.text()).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);state.textName=f.name;updateSyncStatus();toast(`TXT cargado: ${state.textLines.length} líneas.`);e.target.value="";});
+$("srtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.cues=parseSRT(await f.text());state.srtName=f.name;updateSyncStatus();renderTracks();toast(state.cues.length?`SRT cargado: ${state.cues.length} subtítulos.`:"No se encontraron subtítulos válidos en el SRT.");e.target.value="";});
 for(const id of ["mediaBtn","audioBtn"]){const el=$(id);el.addEventListener("dragover",e=>{e.preventDefault();el.classList.add("dragover");});el.addEventListener("dragleave",()=>el.classList.remove("dragover"));el.addEventListener("drop",e=>{e.preventDefault();el.classList.remove("dragover");if(id==="mediaBtn")importMedia(e.dataTransfer.files);else handleAudio(e.dataTransfer.files[0]);});}
 $("playBtn").onclick=async()=>{
   if(audio.src) {
