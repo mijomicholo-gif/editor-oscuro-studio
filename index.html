@@ -37,8 +37,10 @@
       <section class="import-section">
         <h3>Sincronizar (opcional)</h3>
         <p>Usa el TXT y el SRT para organizar las escenas con la narración.</p>
-        <label class="file-pick">Texto de escenas (.txt)<input id="txtInput" type="file" accept=".txt,text/plain"></label>
-        <label class="file-pick">Subtítulos de ElevenLabs (.srt)<input id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain"></label>
+        <button class="file-pick" id="txtBtn" type="button">Texto de escenas (.txt) <span>＋</span></button>
+        <input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain">
+        <button class="file-pick" id="srtBtn" type="button">Subtítulos de ElevenLabs (.srt) <span>＋</span></button>
+        <input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain">
         <div class="sync-status" id="syncStatus">Sin archivos de sincronización.</div>
       </section>
       <section class="import-section settings">
@@ -49,7 +51,7 @@
     <section class="center">
       <div class="preview-header"><span>VISTA PREVIA</span><span id="previewResolution">16:9 · 1920 × 1080</span></div>
       <div class="preview-stage">
-        <div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas><div class="empty-preview" id="emptyPreview"><div class="empty-symbol">◈</div><strong>Tu historia comienza aquí</strong><span>Importa imágenes o clips para empezar a editar.</span></div></div>
+        <div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas></div>
       </div>
       <div class="transport">
         <span class="timecode" id="currentTime">00:00.00</span>
