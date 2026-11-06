@@ -21,7 +21,7 @@
       <section class="import-section">
         <h3>Tus imágenes y clips</h3>
         <p>Arrastra una carpeta aquí o selecciónala desde tu equipo.</p>
-        <label class="dropzone" id="mediaDrop"><span class="drop-icon">＋</span><strong>Importar medios</strong><small>Imágenes, GIF y vídeos</small><input id="mediaInput" type="file" accept="image/*,video/*" multiple hidden></label>
+        <div class="dropzone" id="mediaDrop" role="button" tabindex="0" aria-label="Importar imágenes y clips"><span class="drop-icon">＋</span><strong>Importar medios</strong><small>Imágenes, GIF y vídeos</small><input class="file-input" id="mediaInput" type="file" accept="image/*,video/*" multiple></div>
         <button class="btn btn-outline full" id="folderBtn">Elegir carpeta</button>
         <button class="text-button" id="filesBtn">Elegir archivos sueltos</button>
         <div class="media-count" id="mediaCount">Aún no hay medios.</div>
@@ -29,7 +29,7 @@
       <section class="import-section">
         <h3>Tu audio (la voz)</h3>
         <p>Importa la narración principal del vídeo.</p>
-        <label class="dropzone compact" id="audioDrop"><span class="drop-icon">♫</span><strong>Importar audio</strong><small>MP3, WAV, M4A, OGG</small><input id="audioInput" type="file" accept="audio/*" hidden></label>
+        <div class="dropzone compact" id="audioDrop" role="button" tabindex="0" aria-label="Importar audio"><span class="drop-icon">♫</span><strong>Importar audio</strong><small>MP3, WAV, M4A, OGG</small><input class="file-input" id="audioInput" type="file" accept="audio/*"></div>
         <div class="media-count" id="audioName">Aún no hay audio.</div>
       </section>
       <section class="import-section">
