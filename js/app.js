@@ -10,13 +10,15 @@ function toast(message) { const el=$("toast"); el.textContent=message; el.classL
 function formatTime(seconds) { const s=Math.max(0,seconds||0); const m=Math.floor(s/60); const sec=Math.floor(s%60); const cs=Math.floor((s%1)*100); return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(cs).padStart(2,"0")}`; }
 function duration() { return audio.duration && Number.isFinite(audio.duration) ? audio.duration : state.cues.at(-1)?.end || state.media.length*5; }
 function importMedia(files) {
-  const accepted=[...files].filter(f=>f.type.startsWith("image/")||f.type.startsWith("video/"));
+  const selected=[...files];
+  const accepted=selected.filter(f=>f.type.startsWith("image/")||f.type.startsWith("video/"));
   for(const file of accepted) {
     const url=URL.createObjectURL(file);
     state.media.push({file,url,name:file.name,type:file.type,kind:file.type.startsWith("video/")?"video":"image",duration:5});
   }
   renderMedia(); renderTracks(); if(state.media.length) $("emptyPreview").hidden=true;
   if(accepted.length) toast(`${accepted.length} archivo(s) importado(s).`);
+  else if(selected.length) toast("No se reconocieron imágenes ni vídeos compatibles.");
 }
 function renderMedia() {
   const images=state.media.filter(x=>x.kind==="image").length, videos=state.media.length-images;
@@ -51,11 +53,15 @@ async function drawCurrent() {
 }
 function loadImage(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});}
 function drawCover(source){const sw=source.videoWidth||source.naturalWidth||source.width,sh=source.videoHeight||source.naturalHeight||source.height;if(!sw||!sh)return;const scale=Math.max(canvas.width/sw,canvas.height/sh);const w=sw*scale,h=sh*scale;ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);}
-function handleAudio(file){if(!file)return;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=URL.createObjectURL(file);state.audioName=file.name;audio.src=state.audioUrl;$("audioName").textContent=file.name;audio.load();renderTracks();toast("Narración cargada.");}
-$("mediaInput").addEventListener("change",e=>importMedia(e.target.files));
+function handleAudio(file){if(!file)return;if(!file.type.startsWith("audio/")&&!/\.(mp3|wav|m4a|ogg|aac|flac)$/i.test(file.name)){toast("Selecciona un archivo de audio compatible.");return;}if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=URL.createObjectURL(file);state.audioName=file.name;audio.src=state.audioUrl;$("audioName").textContent=file.name;audio.load();renderTracks();toast("Narración cargada.");}
+$("mediaInput").addEventListener("change",e=>{importMedia(e.target.files);e.target.value="";});
+$("mediaDrop").addEventListener("click",e=>{if(e.target!==$("mediaInput"))$("mediaInput").click();});
+$("mediaDrop").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("mediaInput").click();}});
 $("filesBtn").onclick=()=>$("mediaInput").click();
 $("folderBtn").onclick=()=>{const input=$("mediaInput");input.setAttribute("webkitdirectory","");input.click();input.addEventListener("change",()=>input.removeAttribute("webkitdirectory"),{once:true});};
-$("audioInput").addEventListener("change",e=>handleAudio(e.target.files[0]));
+$("audioInput").addEventListener("change",e=>{handleAudio(e.target.files[0]);e.target.value="";});
+$("audioDrop").addEventListener("click",e=>{if(e.target!==$("audioInput"))$("audioInput").click();});
+$("audioDrop").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("audioInput").click();}});
 $("txtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.textLines=(await f.text()).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);$("syncStatus").textContent=`${state.textLines.length} líneas de escenas cargadas.`;toast("Texto de escenas cargado.");});
 $("srtInput").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;state.cues=parseSRT(await f.text());$("syncStatus").textContent=`${state.cues.length} subtítulos detectados${state.textLines.length?" · TXT cargado":""}.`;renderTracks();toast(state.cues.length?"Subtítulos SRT cargados.":"No se encontraron subtítulos válidos.");});
 for(const id of ["mediaDrop","audioDrop"]){const el=$(id);el.addEventListener("dragover",e=>{e.preventDefault();el.classList.add("dragover");});el.addEventListener("dragleave",()=>el.classList.remove("dragover"));el.addEventListener("drop",e=>{e.preventDefault();el.classList.remove("dragover");if(id==="mediaDrop")importMedia(e.dataTransfer.files);else handleAudio(e.dataTransfer.files[0]);});}
