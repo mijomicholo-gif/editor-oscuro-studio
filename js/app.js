@@ -1,7 +1,7 @@
 import { parseSRT } from "./srt.js";
 
 const $ = id => document.getElementById(id);
-const state = { media: [], audioUrl: null, audioName: "", textLines: [], cues: [], ratio: "16:9", selected: null, zoom: 1 };
+const state = { media: [], audioUrl: null, audioName: "", textLines: [], textName: "", srtName: "", cues: [], ratio: "16:9", selected: null, zoom: 1 };
 const audio = $("voiceAudio");
 const canvas = $("previewCanvas");
 const ctx = canvas.getContext("2d");
@@ -18,7 +18,7 @@ function importMedia(files) {
     const url=URL.createObjectURL(file);
     state.media.push({file,url,name:file.name,type:file.type,kind:file.type.startsWith("video/")?"video":"image",duration:5});
   }
-  renderMedia(); renderTracks(); if(state.media.length) { $("emptyPreview").hidden=true; if(state.media.length===accepted.length) { state.selected=0; drawCurrent(); } }
+  renderMedia(); renderTracks(); if(state.media.length) { if(state.selected===null) state.selected=0; drawCurrent(); }
   if(accepted.length) toast(`${accepted.length} archivo(s) importado(s).`);
   else if(selected.length) toast("No se reconocieron imágenes ni vídeos compatibles.");
 }
@@ -146,6 +146,6 @@ audio.addEventListener("loadedmetadata",()=>{$("durationTime").textContent=forma
 document.querySelectorAll(".format").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".format").forEach(x=>x.classList.remove("active"));btn.classList.add("active");state.ratio=btn.dataset.ratio;const vertical=state.ratio==="9:16";$("previewFrame").classList.toggle("vertical",vertical);canvas.width=vertical?720:1280;canvas.height=vertical?1280:720;$("previewResolution").textContent=vertical?"9:16 · 1080 × 1920":"16:9 · 1920 × 1080";drawCurrent();});
 $("zoomIn").onclick=()=>{state.zoom=Math.min(2,state.zoom+.1);$("zoomValue").textContent=Math.round(state.zoom*100)+"%";$("videoTrack").style.transformOrigin="left";$("videoTrack").style.transform=`scaleX(${state.zoom})`;};
 $("zoomOut").onclick=()=>{state.zoom=Math.max(.5,state.zoom-.1);$("zoomValue").textContent=Math.round(state.zoom*100)+"%";$("videoTrack").style.transform=`scaleX(${state.zoom})`;};
-$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se quitarán los medios cargados de esta sesión."))return;if(previewVideo){previewVideo.pause();previewVideo.removeAttribute("src");previewVideo.load();}state.selected=null;state.media.forEach(x=>URL.revokeObjectURL(x.url));state.media=[];state.cues=[];state.textLines=[];state.audioName="";if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;audio.removeAttribute("src");audio.load();$("audioName").textContent="Aún no hay audio.";$("syncStatus").textContent="Sin archivos de sincronización.";$("emptyPreview").hidden=false;$("inspectorEmpty").hidden=false;$("inspectorInfo").hidden=true;renderMedia();renderTracks();toast("Editor listo. Puedes importar tus archivos.");drawCurrent();};
+$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se quitarán los medios cargados de esta sesión."))return;if(previewVideo){previewVideo.pause();previewVideo.removeAttribute("src");previewVideo.load();}state.selected=null;state.media.forEach(x=>URL.revokeObjectURL(x.url));state.media=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";state.audioName="";if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;audio.removeAttribute("src");audio.load();$("audioName").textContent="Aún no hay audio.";$("syncStatus").textContent="Sin archivos de sincronización.";$("inspectorEmpty").hidden=false;$("inspectorInfo").hidden=true;renderMedia();renderTracks();toast("Editor listo. Puedes importar tus archivos.");drawCurrent();};
 $("exportBtn").onclick=()=>toast("La exportación MP4 se habilitará en la siguiente etapa. Por ahora puedes importar y sincronizar medios y revisar la vista previa.");
 renderMedia();renderTracks();
