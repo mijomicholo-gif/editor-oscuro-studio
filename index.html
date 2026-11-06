@@ -21,22 +21,24 @@
       <section class="import-section">
         <h3>Tus imágenes y clips</h3>
         <p>Arrastra una carpeta aquí o selecciónala desde tu equipo.</p>
-        <div class="dropzone" id="mediaDrop" role="button" tabindex="0" aria-label="Importar imágenes y clips"><span class="drop-icon">＋</span><strong>Importar medios</strong><small>Imágenes, GIF y vídeos</small><input class="file-input" id="mediaInput" type="file" accept="image/*,video/*" multiple></div>
-        <button class="btn btn-outline full" id="folderBtn">Elegir carpeta</button>
-        <button class="text-button" id="filesBtn">Elegir archivos sueltos</button>
+        <button class="btn btn-primary full import-action" id="mediaBtn" type="button">＋ Importar imágenes y vídeos</button>
+        <input class="native-file-input" id="mediaInput" type="file" accept="image/*,video/*" multiple>
+        <button class="btn btn-outline full" id="folderBtn" type="button">Elegir carpeta</button>
+        <button class="text-button" id="filesBtn" type="button">Elegir archivos sueltos</button>
         <div class="media-count" id="mediaCount">Aún no hay medios.</div>
       </section>
       <section class="import-section">
         <h3>Tu audio (la voz)</h3>
         <p>Importa la narración principal del vídeo.</p>
-        <div class="dropzone compact" id="audioDrop" role="button" tabindex="0" aria-label="Importar audio"><span class="drop-icon">♫</span><strong>Importar audio</strong><small>MP3, WAV, M4A, OGG</small><input class="file-input" id="audioInput" type="file" accept="audio/*"></div>
+        <button class="btn btn-primary full import-action" id="audioBtn" type="button">♫ Importar audio</button>
+        <input class="native-file-input" id="audioInput" type="file" accept="audio/*">
         <div class="media-count" id="audioName">Aún no hay audio.</div>
       </section>
       <section class="import-section">
         <h3>Sincronizar (opcional)</h3>
         <p>Usa el TXT y el SRT para organizar las escenas con la narración.</p>
-        <label class="file-pick">Texto de escenas (.txt)<input id="txtInput" type="file" accept=".txt,text/plain"></label>
-        <label class="file-pick">Subtítulos de ElevenLabs (.srt)<input id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain"></label>
+        <button class="btn btn-outline full" id="txtBtn" type="button">Cargar texto de escenas (.TXT)</button><input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain">
+        <button class="btn btn-outline full" id="srtBtn" type="button">Cargar subtítulos (.SRT)</button><input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain">
         <div class="sync-status" id="syncStatus">Sin archivos de sincronización.</div>
       </section>
       <section class="import-section settings">
