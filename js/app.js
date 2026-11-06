@@ -8,6 +8,7 @@ const ctx = canvas.getContext("2d");
 let toastTimer;
 let previewVideo = null;
 let previewFrameRequest = 0;
+let drawSequence = 0;
 function toast(message) { const el=$("toast"); el.textContent=message; el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove("show"),2600); }
 function formatTime(seconds) { const s=Math.max(0,seconds||0); const m=Math.floor(s/60); const sec=Math.floor(s%60); const cs=Math.floor((s%1)*100); return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(cs).padStart(2,"0")}`; }
 function duration() { return audio.duration && Number.isFinite(audio.duration) ? audio.duration : state.cues.at(-1)?.end || state.media.length*5; }
@@ -54,8 +55,10 @@ function getPreviewVideo() {
 function paintVideoFrame() {
   if(previewVideo && previewVideo.readyState>=2) drawCover(previewVideo);
   if(previewVideo && !previewVideo.paused && !previewVideo.ended) previewFrameRequest=requestAnimationFrame(paintVideoFrame);
+  else previewFrameRequest=0;
 }
 async function drawCurrent() {
+  const sequence=++drawSequence;
   const t=audio.src ? (audio.currentTime||0) : 0;
   $("currentTime").textContent=formatTime(t);
   $("durationTime").textContent=formatTime(duration());
@@ -77,10 +80,10 @@ async function drawCurrent() {
   }
   const item=state.media[index];if(!item)return;
   try {
-    ctx.fillStyle="#050507";ctx.fillRect(0,0,canvas.width,canvas.height);
     if(item.kind==="image") {
-      if(previewVideo) previewVideo.pause();
-      const img=await loadImage(item.url);drawCover(img);
+      if(previewVideo){previewVideo.pause();cancelAnimationFrame(previewFrameRequest);previewFrameRequest=0;}
+      const img=await loadImage(item.url);
+      if(sequence===drawSequence) drawCover(img);
     } else {
       const vid=getPreviewVideo();
       if(vid.dataset.url!==item.url) {
@@ -91,18 +94,19 @@ async function drawCurrent() {
           vid.addEventListener("loadeddata",done,{once:true});vid.addEventListener("error",done,{once:true});
         });
       }
-      if(Number.isFinite(vid.duration) && vid.duration>0) {
+      if(sequence!==drawSequence) return;
+      if(Number.isFinite(vid.duration) && vid.duration>0 && (audio.paused || !audio.src)) {
         const target=Math.min(localTime,Math.max(0,vid.duration-.05));
-        if(Math.abs(vid.currentTime-target)>.35) {
+        if(Math.abs(vid.currentTime-target)>0.75) {
           try { vid.currentTime=target; } catch {}
         }
       }
       if(audio.src && !audio.paused) {
         await vid.play().catch(()=>{});
-        cancelAnimationFrame(previewFrameRequest);paintVideoFrame();
+        if(!previewFrameRequest) paintVideoFrame();
       } else {
-        vid.pause();
-        if(vid.readyState>=2) drawCover(vid);
+        vid.pause();cancelAnimationFrame(previewFrameRequest);previewFrameRequest=0;
+        if(vid.readyState>=2 && sequence===drawSequence) drawCover(vid);
       }
     }
   } catch(e) { console.warn("No se pudo mostrar el medio",e); toast("No se pudo reproducir este archivo de vídeo."); }
