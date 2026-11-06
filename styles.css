@@ -4,3 +4,6 @@
 /* Selector de archivos oculto sin alterar el aspecto de los controles originales */
 .native-file-input{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .dropzone{font-family:inherit;color:var(--text);width:100%;padding:0}
+
+/* Acceso rápido a sincronización: mantener TXT/SRT arriba del panel */
+.workspace{min-height:0;overflow:hidden}.sidebar{height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}.sidebar .side-heading{padding-top:13px;padding-bottom:8px}.sidebar .side-tab{padding-top:9px;padding-bottom:9px}.sidebar .import-section{padding:11px 13px}.sidebar .import-section p{margin-bottom:8px}.sidebar .dropzone{height:82px}.sidebar .dropzone.compact{height:66px}.sidebar .media-count,.sidebar .sync-status{margin-top:6px}.sidebar .file-pick{padding:7px 0}
