@@ -19,6 +19,15 @@
       <div class="side-heading">PROYECTO</div>
       <button class="side-tab active">▧ <span>Medios</span></button>
       <section class="import-section">
+        <h3>Sincronizar (opcional)</h3>
+        <p>Usa el TXT y el SRT para organizar las escenas con la narración.</p>
+        <button class="file-pick" id="txtBtn" type="button">Texto de escenas (.txt) <span>＋</span></button>
+        <input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain">
+        <button class="file-pick" id="srtBtn" type="button">Subtítulos de ElevenLabs (.srt) <span>＋</span></button>
+        <input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain">
+        <div class="sync-status" id="syncStatus">Sin archivos de sincronización.</div>
+      </section>
+      <section class="import-section">
         <h3>Tus imágenes y clips</h3>
         <p>Arrastra una carpeta aquí o selecciónala desde tu equipo.</p>
         <button class="dropzone" id="mediaBtn" type="button"><span class="drop-icon">＋</span><strong>Importar medios</strong><small>Imágenes, GIF y vídeos</small></button>
@@ -33,15 +42,6 @@
         <button class="dropzone compact" id="audioBtn" type="button"><span class="drop-icon">♫</span><strong>Importar audio</strong><small>MP3, WAV, M4A, OGG</small></button>
         <input class="native-file-input" id="audioInput" type="file" accept="audio/*">
         <div class="media-count" id="audioName">Aún no hay audio.</div>
-      </section>
-      <section class="import-section">
-        <h3>Sincronizar (opcional)</h3>
-        <p>Usa el TXT y el SRT para organizar las escenas con la narración.</p>
-        <button class="file-pick" id="txtBtn" type="button">Texto de escenas (.txt) <span>＋</span></button>
-        <input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain">
-        <button class="file-pick" id="srtBtn" type="button">Subtítulos de ElevenLabs (.srt) <span>＋</span></button>
-        <input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain">
-        <div class="sync-status" id="syncStatus">Sin archivos de sincronización.</div>
       </section>
       <section class="import-section settings">
         <h3>Formato del proyecto</h3>
