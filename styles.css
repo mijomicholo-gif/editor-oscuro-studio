@@ -20,3 +20,5 @@
 .right-workspace .scene-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:1050px){.workspace-columns{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.studio{width:calc(100% - 28px)}}
 @media(max-width:780px){.workspace-columns{grid-template-columns:1fr}.right-workspace .player-panel{position:static}.left-workspace .summary-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.download-link{grid-column:1/-1;display:block;text-align:center;text-decoration:none;background:#18362d;border-color:#285d4b;color:#8ce8bd;font-weight:800;padding:13px;border-radius:8px}.download-link:hover{filter:brightness(1.15)}
