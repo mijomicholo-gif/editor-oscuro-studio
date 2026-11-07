@@ -1,75 +1,60 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#101116">
-  <meta name="description" content="EDITOR OSCURO STUDIO — editor de vídeo en el navegador">
-  <title>EDITOR OSCURO STUDIO</title>
-  <link rel="stylesheet" href="./styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d13"><meta name="description" content="EDITOR OSCURO STUDIO — estudio de edición de vídeo">
+<title>EDITOR OSCURO STUDIO</title><link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="./"><span class="brand-mark">◈</span><span>EDITOR OSCURO <b>STUDIO</b></span></a>
-    <div class="project-name">Proyecto sin título <span class="save-state">● Local</span></div>
-    <div class="top-actions"><button class="btn btn-quiet" id="newProject">Nuevo proyecto</button><button class="btn btn-primary" id="exportBtn">Exportar</button></div>
-  </header>
-  <main class="workspace">
-    <aside class="sidebar">
-      <div class="side-heading">PROYECTO</div>
-      <button class="side-tab active">▧ <span>Medios</span></button>
-      <section class="import-section">
-        <h3>Sincronizar (opcional)</h3>
-        <p>Usa el TXT y el SRT para organizar las escenas con la narración.</p>
-        <button class="file-pick" id="txtBtn" type="button">Texto de escenas (.txt) <span>＋</span></button>
-        <input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain">
-        <button class="file-pick" id="srtBtn" type="button">Subtítulos de ElevenLabs (.srt) <span>＋</span></button>
-        <input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain">
-        <div class="sync-status" id="syncStatus">Sin archivos de sincronización.</div>
-      </section>
-      <section class="import-section">
-        <h3>Tus imágenes y clips</h3>
-        <p>Arrastra una carpeta aquí o selecciónala desde tu equipo.</p>
-        <button class="dropzone" id="mediaBtn" type="button"><span class="drop-icon">＋</span><strong>Importar medios</strong><small>Imágenes, GIF y vídeos</small></button>
-        <input class="native-file-input" id="mediaInput" type="file" accept="image/*,video/*" multiple>
-        <button class="btn btn-outline full" id="folderBtn" type="button">Elegir carpeta</button>
-        <button class="text-button" id="filesBtn" type="button">Elegir archivos sueltos</button>
-        <div class="media-count" id="mediaCount">Aún no hay medios.</div>
-      </section>
-      <section class="import-section">
-        <h3>Tu audio (la voz)</h3>
-        <p>Importa la narración principal del vídeo.</p>
-        <button class="dropzone compact" id="audioBtn" type="button"><span class="drop-icon">♫</span><strong>Importar audio</strong><small>MP3, WAV, M4A, OGG</small></button>
-        <input class="native-file-input" id="audioInput" type="file" accept="audio/*">
-        <div class="media-count" id="audioName">Aún no hay audio.</div>
-      </section>
-      <section class="import-section settings">
-        <h3>Formato del proyecto</h3>
-        <div class="format-switch"><button class="format active" data-ratio="16:9">16:9 <small>YouTube</small></button><button class="format" data-ratio="9:16">9:16 <small>Shorts</small></button></div>
-      </section>
-    </aside>
-    <section class="center">
-      <div class="preview-header"><span>VISTA PREVIA</span><span id="previewResolution">16:9 · 1920 × 1080</span></div>
-      <div class="preview-stage">
-        <div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas></div>
-      </div>
-      <div class="transport">
-        <span class="timecode" id="currentTime">00:00.00</span>
-        <div class="transport-controls"><button id="toStart" title="Ir al inicio">|◀</button><button id="playBtn" class="play-button" title="Reproducir">▶</button><button id="stopBtn" title="Detener">■</button></div>
-        <span class="timecode" id="durationTime">00:00.00</span>
-      </div>
-      <section class="timeline">
-        <div class="timeline-top"><div><strong>LÍNEA DE TIEMPO</strong><span id="timelineSummary">0 escenas</span></div><div class="timeline-tools"><button id="zoomOut">−</button><span id="zoomValue">100%</span><button id="zoomIn">＋</button></div></div>
-        <div class="ruler"><span>00:00</span><span>00:10</span><span>00:20</span><span>00:30</span><span>00:40</span><span>00:50</span></div>
-        <div class="track-row"><div class="track-label">VÍDEO</div><div class="track-content" id="videoTrack"><div class="track-empty">Importa medios para crear tu secuencia</div></div></div>
-        <div class="track-row"><div class="track-label">AUDIO</div><div class="track-content audio-track" id="audioTrack"><div class="track-empty">Tu narración aparecerá aquí</div></div></div>
-        <div class="track-row"><div class="track-label">SUBTÍTULOS</div><div class="track-content subtitle-track" id="subtitleTrack"><div class="track-empty">Los subtítulos aparecerán aquí</div></div></div>
-      </section>
-    </section>
-    <aside class="inspector"><div class="side-heading">INSPECTOR</div><div class="inspector-empty" id="inspectorEmpty"><div>⌁</div><strong>Nada seleccionado</strong><p>Selecciona un clip de la línea de tiempo para ver sus opciones.</p></div><div id="inspectorInfo" hidden></div></aside>
-  </main>
-  <audio id="voiceAudio" preload="metadata"></audio>
-  <div class="toast" id="toast" role="status"></div>
-  <script type="module" src="./js/app.js"></script>
-</body>
-</html>
+<header class="topbar">
+ <a class="brand" href="./"><span class="brand-mark">◈</span><span>EDITOR OSCURO <b>STUDIO</b></span></a>
+ <div class="project-name">Proyecto sin título <span class="save-state">● Estudio local</span></div>
+ <div class="top-actions"><button class="btn btn-quiet" id="newProject">Nuevo proyecto</button><button class="btn btn-primary" id="exportBtn">Crear video MP4 <span>→</span></button></div>
+</header>
+<main class="studio">
+ <section class="intro"><div class="eyebrow">TU ESPACIO CREATIVO</div><h1>Estudio de edición</h1><p>Organiza tus recursos, sincroniza la narración y crea videos listos para tus plataformas.</p></section>
+ <div class="setup-grid">
+  <section class="panel" id="mediaPanel">
+   <div class="panel-head"><span class="step">01</span><div><h2>Imágenes y clips</h2><p>Importa las escenas de tu proyecto.</p></div><span class="status" id="mediaStatus">PENDIENTE</span></div>
+   <button class="dropzone" id="mediaBtn" type="button"><span class="drop-icon">↑</span><strong>Arrastra aquí tus imágenes, clips o una carpeta</strong><small>También puedes seleccionar archivos desde tu equipo</small><span class="drop-actions"><span class="mini-button" id="folderVisual">▱ Elegir carpeta</span><span class="mini-button">＋ Añadir archivos</span></span><small>JPG · PNG · WEBP · MP4 · WEBM · MOV</small></button>
+   <input class="native-file-input" id="mediaInput" type="file" accept="image/*,video/*" multiple>
+   <button class="sr-button" id="folderBtn" type="button">Elegir carpeta</button><button class="sr-button" id="filesBtn" type="button">Elegir archivos sueltos</button>
+   <div class="panel-foot" id="mediaCount">0 escenas importadas</div>
+  </section>
+  <section class="panel">
+   <div class="panel-head"><span class="step">02</span><div><h2>Narración y audio</h2><p>Selecciona la voz que acompañará tu video.</p></div><span class="status" id="audioStatus">PENDIENTE</span></div>
+   <button class="dropzone audio-drop" id="audioBtn" type="button"><span class="drop-icon">♫</span><strong>Arrastra aquí tu archivo de narración</strong><small>MP3 · WAV · M4A · AAC · OGG</small><span class="mini-button">Seleccionar audio</span></button>
+   <input class="native-file-input" id="audioInput" type="file" accept="audio/*">
+   <div class="panel-foot" id="audioName">Aún no hay audio.</div>
+  </section>
+  <section class="panel sync-panel">
+   <div class="panel-head"><span class="step">03</span><div><h2>Sincronización de escenas</h2><p>Conecta cada escena con su frase y sus tiempos.</p></div><span class="status" id="syncStatusBadge">PENDIENTE</span></div>
+   <div class="sync-files">
+    <div class="sync-file"><div class="file-type">TXT</div><div class="sync-copy"><strong>Guion de escenas</strong><small>Una línea de texto por cada escena, en el mismo orden.</small></div><button class="mini-button" id="txtBtn" type="button">Seleccionar TXT</button><input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain"><div class="file-drop" id="txtDrop">Arrastra aquí tu archivo .TXT</div></div>
+    <div class="sync-file"><div class="file-type srt">SRT</div><div class="sync-copy"><strong>Subtítulos con tiempos</strong><small>Archivo de subtítulos con los tiempos de cada frase.</small></div><button class="mini-button" id="srtBtn" type="button">Seleccionar SRT</button><input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain"><div class="file-drop" id="srtDrop">Arrastra aquí tu archivo .SRT</div></div>
+   </div>
+   <div class="sync-options"><label><input type="radio" name="syncMode" value="manual" checked> <span><b>Duración manual</b><small>Ajusta los segundos de cada escena.</small></span></label><label><input type="radio" name="syncMode" value="srt"> <span><b>Sincronizar con TXT + SRT</b><small>Utiliza los tiempos del archivo SRT.</small></span></label></div>
+   <div class="panel-foot" id="syncStatus">Sin archivos de sincronización.</div>
+  </section>
+  <section class="panel settings-panel">
+   <div class="panel-head"><span class="step">04</span><div><h2>Formato y calidad</h2><p>Configura las dimensiones y el acabado del video.</p></div><span class="status done">COMPLETADO</span></div>
+   <div class="setting-block"><div class="setting-title">Formato de video</div><div class="format-switch"><button class="format active" data-ratio="16:9">Horizontal 16:9<small>YouTube y pantallas</small><em>✓ Seleccionado</em></button><button class="format" data-ratio="9:16">Vertical 9:16<small>Shorts · Reels · TikTok</small></button></div></div>
+   <div class="setting-block"><label class="setting-title" for="motionSelect">Movimiento de escenas</label><select id="motionSelect"><option>Sin movimiento</option><option>Zoom lento de acercamiento</option><option>Zoom lento de alejamiento</option><option>Desplazamiento hacia la izquierda</option><option>Desplazamiento hacia la derecha</option><option>Desplazamiento hacia arriba</option><option>Desplazamiento hacia abajo</option><option>Movimiento cinematográfico</option></select></div>
+   <div class="setting-block"><label class="setting-title" for="qualitySelect">Resolución de exportación</label><select id="qualitySelect"><option>Full HD · 1080p</option><option>HD · 720p</option></select></div>
+   <div class="setting-block"><div class="setting-title">Estilo de subtítulos</div><div class="chip-row" id="subtitleStyles"><button class="chip active">Karaoke profesional</button><button class="chip">Minimalista</button><button class="chip">Impacto</button><button class="chip">Contorno reforzado</button><button class="chip">Compacto</button></div></div>
+   <div class="setting-block"><div class="setting-title">Color de la palabra activa</div><div class="color-row" id="wordColors"><button class="color-chip active" data-color="#ffd84a" style="--swatch:#ffd84a" aria-label="Amarillo"></button><button class="color-chip" data-color="#67cfff" style="--swatch:#67cfff" aria-label="Azul cielo"></button><button class="color-chip" data-color="#59df9a" style="--swatch:#59df9a" aria-label="Verde"></button><button class="color-chip" data-color="#ff789c" style="--swatch:#ff789c" aria-label="Rosa coral"></button><button class="color-chip" data-color="#ad8aff" style="--swatch:#ad8aff" aria-label="Violeta"></button><button class="color-chip" data-color="#ff9c52" style="--swatch:#ff9c52" aria-label="Naranja"></button><button class="color-chip" data-color="#ffffff" style="--swatch:#ffffff" aria-label="Blanco"></button></div><p class="hint">Las palabras normales permanecen blancas. La palabra activa usa el color elegido. Todas llevan contorno negro y no tienen fondo.</p></div>
+  </section>
+ </div>
+ <section class="summary-strip"><div><span>ESCENAS</span><strong id="sceneTotal">0</strong></div><div><span>SUBTÍTULOS</span><strong id="subtitleTotal">0</strong></div><div><span>DURACIÓN TOTAL</span><strong id="projectDuration">0:00</strong></div><button class="btn btn-primary create-button" id="createVideoBtn">CREAR VIDEO MP4 <span>→</span></button><p class="export-note">El porcentaje indica el avance de creación y conversión. Cuando comience la descarga, podrás seguir editando y preparando otro proyecto en esta pestaña.</p></section>
+ <section class="panel player-panel">
+  <div class="panel-head"><span class="step">05</span><div><h2>Reproductor de video</h2><p>Previsualiza el montaje antes de exportarlo.</p></div><span class="status" id="playerStatus">PENDIENTE</span></div>
+  <div class="player-stage"><div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas><div class="player-empty" id="playerEmpty"><span>▶</span><strong>Tu video aparecerá aquí</strong><small>Importa tus escenas para comenzar</small></div></div></div>
+  <div class="player-controls"><span class="timecode" id="currentTime">00:00.00</span><div class="transport-controls"><button id="toStart" title="Ir al inicio">|◀</button><button id="playBtn" class="play-button" title="Reproducir">▶</button><button id="stopBtn" title="Detener">■</button></div><span class="timecode" id="durationTime">00:00.00</span></div>
+  <div class="player-foot"><span>SIN ESCENAS <b id="playerSceneCount">0</b></span><span id="previewResolution">16:9 · 1920 × 1080</span></div>
+ </section>
+ <section class="panel scenes-panel"><div class="panel-head"><span class="step">06</span><div><h2>Escenas del proyecto</h2><p>Organiza el orden y la duración de cada escena.</p></div><span class="status" id="scenesStatus">PENDIENTE</span></div><div class="scenes-toolbar"><span>ARCHIVOS IMPORTADOS</span><b id="sceneFileCount">0 escenas</b></div><div class="scene-list" id="sceneList"><div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div></div></section>
+ <footer class="studio-footer"><span>◈</span><b>VIDEO EDITOR PRO</b><small>ESTUDIO LOCAL DE EDICIÓN</small></footer>
+</main>
+<audio id="voiceAudio" preload="metadata"></audio><div class="toast" id="toast" role="status"></div>
+<script type="module" src="./js/app.js"></script>
+</body></html>
