@@ -22,24 +22,57 @@ function fmt(value){
   const s=Math.max(0,Number(value)||0),m=Math.floor(s/60),sec=Math.floor(s%60),cs=Math.floor(s%1*100);
   return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(cs).padStart(2,"0")}`;
 }
+function normalizeWords(text){
+  return (text.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").match(/[a-z0-9]+/g)||[]);
+}
+function buildSceneTimings(){
+  if(!state.media.length)return [];
+  if(state.mode!=="srt"||!state.textLines.length||!state.cues.length){
+    let cursor=0;return state.media.map((_,i)=>{const start=cursor;cursor+=state.durations[i]||5;return {start,end:cursor};});
+  }
+  if(state.textLines.length!==state.media.length)return [];
+  const tokens=[];
+  state.cues.forEach((cue,cueIndex)=>normalizeWords(cue.text).forEach(word=>tokens.push({word,cueIndex,start:cue.start,end:cue.end})));
+  const timings=[];let cursor=0,exact=true;
+  for(const line of state.textLines){
+    const wanted=normalizeWords(line);if(!wanted.length){exact=false;break;}
+    let found=-1;
+    outer:for(let i=cursor;i<=tokens.length-wanted.length;i++){
+      for(let j=0;j<wanted.length;j++)if(tokens[i+j].word!==wanted[j])continue outer;
+      found=i;break;
+    }
+    if(found<0){exact=false;break;}
+    timings.push({start:tokens[found].start,end:tokens[found+wanted.length-1].end});
+    cursor=found+wanted.length;
+  }
+  if(exact&&timings.length===state.media.length)return timings;
+  const weights=state.textLines.map(line=>Math.max(1,normalizeWords(line).length));
+  const total=weights.reduce((sum,n)=>sum+n,0),start=state.cues[0].start;
+  const end=state.cues[state.cues.length-1].end,span=end-start;let used=0;
+  return weights.map(weight=>{const from=start+span*used/total;used+=weight;return {start:from,end:start+span*used/total};});
+}
 function totalDuration(){
-  if(state.mode==="srt"&&state.cues.length)return Math.max(audio.duration||0,state.cues.at(-1)?.end||0);
+  if(state.mode==="srt"&&state.cues.length)return Math.max(audio.duration||0,state.cues[state.cues.length-1].end);
   return state.durations.reduce((a,b)=>a+b,0);
 }
 function sceneAt(time){
-  if(state.mode==="srt"&&state.cues.length){
-    const idx=state.cues.findIndex(c=>time>=c.start&&time<c.end);
-    if(idx>=0)return Math.min(idx,state.media.length-1);
-    const passed=state.cues.filter(c=>c.start<=time).length;
-    return Math.max(0,Math.min(state.media.length-1,passed));
+  const timings=buildSceneTimings();
+  if(state.mode==="srt"&&timings.length){
+    for(let i=0;i<timings.length;i++)if(time>=timings[i].start&&time<timings[i].end)return i;
+    if(time<timings[0].start)return 0;
+    for(let i=0;i<timings.length-1;i++)if(time>=timings[i].end&&time<timings[i+1].start)return i;
+    return timings.length-1;
   }
-  let cursor=0;
-  for(let i=0;i<state.durations.length;i++){if(time<cursor+state.durations[i])return i;cursor+=state.durations[i];}
+  let cursor=0;for(let i=0;i<state.durations.length;i++){if(time<cursor+state.durations[i])return i;cursor+=state.durations[i];}
   return Math.max(0,state.media.length-1);
 }
 function sceneStart(index){
-  if(state.mode==="srt"&&state.cues[index])return state.cues[index].start;
+  if(state.mode==="srt"){const timing=buildSceneTimings()[index];if(timing)return timing.start;}
   return state.durations.slice(0,index).reduce((a,b)=>a+b,0);
+}
+function sceneDuration(index){
+  if(state.mode==="srt"){const timing=buildSceneTimings()[index];if(timing)return Math.max(.5,timing.end-timing.start);}
+  return state.durations[index]||5;
 }
 function loadImg(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});}
 function activeVideo(){
@@ -136,7 +169,7 @@ function updateUI(){
   const list=$("sceneList");list.innerHTML="";
   if(!state.media.length){list.innerHTML='<div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div>';}
   state.media.forEach((item,i)=>{
-    const card=document.createElement("button");card.type="button";card.className="scene-card";card.addEventListener("click",()=>{pause();state.selected=i;render(state.mode==="srt"?(state.cues[i]?.start||0):sceneStart(i));});
+    const card=document.createElement("button");card.type="button";card.className="scene-card";card.addEventListener("click",()=>{pause();state.selected=i;render(sceneStart(i));});
     const thumb=document.createElement(item.kind==="video"?"video":"img");thumb.src=item.url;if(item.kind==="video"){thumb.muted=true;thumb.preload="metadata";}else thumb.alt=item.name;
     const label=document.createElement("div");label.textContent=`${String(i+1).padStart(2,"0")} · ${item.name}`;card.append(thumb,label);
     const durationInput=document.createElement("input");durationInput.type="number";durationInput.min=".5";durationInput.step=".5";durationInput.value=state.durations[i];durationInput.title="Duración en segundos";durationInput.style.cssText="width:calc(100% - 16px);margin:0 8px 8px;background:#101522;color:white;border:1px solid #343c50;border-radius:5px;padding:6px";durationInput.disabled=state.mode==="srt";durationInput.addEventListener("change",()=>{const v=Number(durationInput.value);if(v>=.5){state.durations[i]=v;updateUI();render(audio.currentTime||0);}});card.append(durationInput);list.append(card);
