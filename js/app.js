@@ -113,8 +113,8 @@ function drawSubtitle(time){
 async function render(time=audio.currentTime||0){
   if(!state.media.length)return;
   const token=++drawToken,index=sceneAt(time),item=state.media[index];state.selected=index;
-  const start=state.mode==="srt"?(state.cues[index]?.start||0):sceneStart(index);
-  const span=state.mode==="srt"?Math.max(.5,(state.cues[index]?.end||start+1)-start):state.durations[index]||5;
+  const start=sceneStart(index);
+  const span=sceneDuration(index);
   const progress=Math.max(0,Math.min(1,(time-start)/span));
   try{
     if(item.kind==="image"){
@@ -224,8 +224,8 @@ async function exportMP4(){
   const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};const stopped=new Promise((resolve,reject)=>{recorder.onstop=resolve;recorder.onerror=()=>reject(Error("No se pudo grabar el montaje."));});
   const cache=await Promise.all(state.media.map(async item=>{if(item.kind==="image"){const img=new Image();img.src=item.url;await img.decode();return img;}const v=document.createElement("video");v.src=item.url;v.muted=true;v.preload="auto";await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=()=>rej(Error("No se pudo leer "+item.name));});return v;}));
   function paint(t){
-   const idx=sceneAt(t),item=state.media[idx],start=state.mode==="srt"?(state.cues[idx]?.start||0):sceneStart(idx);
-   const span=state.mode==="srt"?Math.max(.5,(state.cues[idx]?.end||start+1)-start):state.durations[idx]||5;
+   const idx=sceneAt(t),item=state.media[idx],start=sceneStart(idx);
+   const span=sceneDuration(idx);
    const m=cache[idx];if(m instanceof HTMLVideoElement){const local=t-start;if(Math.abs(m.currentTime-Math.min(local,m.duration||0))>.35)m.currentTime=Math.min(local,Math.max(0,(m.duration||.1)-.05));}
    const sw=m.videoWidth||m.naturalWidth,sh=m.videoHeight||m.naturalHeight;c.fillStyle="#05070b";c.fillRect(0,0,width,height);
    if(sw&&sh){let z=1,p=Math.max(0,Math.min(1,(t-start)/span)),x=0,y=0;if(state.motion==="Zoom lento de acercamiento")z=1+p*.12;if(state.motion==="Zoom lento de alejamiento")z=1.12-p*.12;if(state.motion==="Movimiento cinematográfico")z=1.06+p*.08;if(state.motion.includes("izquierda")){z=1.14;x=(.5-p)*width*.12;}if(state.motion.includes("derecha")){z=1.14;x=(p-.5)*width*.12;}if(state.motion.includes("arriba")){z=1.14;y=(.5-p)*height*.12;}if(state.motion.includes("abajo")){z=1.14;y=(p-.5)*height*.12;}const sc=Math.max(width/sw,height/sh)*z,dw=sw*sc,dh=sh*sc;c.drawImage(m,(width-dw)/2+x,(height-dh)/2+y,dw,dh);}
