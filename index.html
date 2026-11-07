@@ -13,6 +13,8 @@
 </header>
 <main class="studio">
  <section class="intro"><div class="eyebrow">TU ESPACIO CREATIVO</div><h1>Estudio de edición</h1><p>Organiza tus recursos, sincroniza la narración y crea videos listos para tus plataformas.</p></section>
+ <div class="workspace-columns">
+ <div class="left-workspace">
  <div class="setup-grid">
   <section class="panel" id="mediaPanel">
    <div class="panel-head"><span class="step">01</span><div><h2>Imágenes y clips</h2><p>Importa las escenas de tu proyecto.</p></div><span class="status" id="mediaStatus">PENDIENTE</span></div>
@@ -46,6 +48,8 @@
   </section>
  </div>
  <section class="summary-strip"><div><span>ESCENAS</span><strong id="sceneTotal">0</strong></div><div><span>SUBTÍTULOS</span><strong id="subtitleTotal">0</strong></div><div><span>DURACIÓN TOTAL</span><strong id="projectDuration">0:00</strong></div><button class="btn btn-primary create-button" id="createVideoBtn">CREAR VIDEO MP4 <span>→</span></button><p class="export-note">El porcentaje indica el avance de creación y conversión. Cuando comience la descarga, podrás seguir editando y preparando otro proyecto en esta pestaña.</p></section>
+ </div>
+ <div class="right-workspace">
  <section class="panel player-panel">
   <div class="panel-head"><span class="step">05</span><div><h2>Reproductor de video</h2><p>Previsualiza el montaje antes de exportarlo.</p></div><span class="status" id="playerStatus">PENDIENTE</span></div>
   <div class="player-stage"><div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas><div class="player-empty" id="playerEmpty"><span>▶</span><strong>Tu video aparecerá aquí</strong><small>Importa tus escenas para comenzar</small></div></div></div>
@@ -53,6 +57,8 @@
   <div class="player-foot"><span>SIN ESCENAS <b id="playerSceneCount">0</b></span><span id="previewResolution">16:9 · 1920 × 1080</span></div>
  </section>
  <section class="panel scenes-panel"><div class="panel-head"><span class="step">06</span><div><h2>Escenas del proyecto</h2><p>Organiza el orden y la duración de cada escena.</p></div><span class="status" id="scenesStatus">PENDIENTE</span></div><div class="scenes-toolbar"><span>ARCHIVOS IMPORTADOS</span><b id="sceneFileCount">0 escenas</b></div><div class="scene-list" id="sceneList"><div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div></div></section>
+ </div>
+ </div>
  <footer class="studio-footer"><span>◈</span><b>VIDEO EDITOR PRO</b><small>ESTUDIO LOCAL DE EDICIÓN</small></footer>
 </main>
 <audio id="voiceAudio" preload="metadata"></audio><div class="toast" id="toast" role="status"></div>
