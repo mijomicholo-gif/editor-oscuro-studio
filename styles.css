@@ -12,7 +12,7 @@
 .left-workspace .summary-strip{margin:0;grid-template-columns:repeat(3,minmax(0,1fr))}
 .left-workspace .summary-strip .create-button{grid-column:1/-1;width:100%}
 .left-workspace .summary-strip .export-note{grid-column:1/-1}
-.right-workspace .player-panel{margin:0;position:sticky;top:82px}
+.right-workspace .player-panel{margin:0}
 .right-workspace .scenes-panel{margin:0}
 .right-workspace .player-stage{min-height:180px;padding:10px}
 .right-workspace .preview-frame{width:100%}
