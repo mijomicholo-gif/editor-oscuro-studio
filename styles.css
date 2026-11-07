@@ -20,3 +20,27 @@
 .right-workspace .scene-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:1050px){.workspace-columns{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.studio{width:calc(100% - 28px)}}
 @media(max-width:780px){.workspace-columns{grid-template-columns:1fr}.right-workspace .player-panel{position:static}.left-workspace .summary-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+
+/* PASO 05: monitor fijo durante el desplazamiento de la página */
+@media (min-width:781px){
+  .workspace-columns{align-items:start}
+  .right-workspace{align-self:stretch;min-height:100%}
+  .right-workspace>.player-panel{
+    position:sticky !important;
+    top:82px;
+    align-self:start;
+    z-index:18;
+    margin:0;
+    max-height:calc(100vh - 98px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#45405e transparent;
+  }
+  .right-workspace>.player-panel::-webkit-scrollbar{width:5px}
+  .right-workspace>.player-panel::-webkit-scrollbar-thumb{background:#45405e;border-radius:8px}
+}
+@media (max-width:780px){
+  .right-workspace>.player-panel{position:static !important;max-height:none;overflow:visible}
+}
