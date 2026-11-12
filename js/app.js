@@ -254,19 +254,43 @@ document.querySelectorAll("#wordColors .color-chip").forEach(chip=>chip.onclick=
 $("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se eliminarán los archivos cargados."))return;pause();state.media.forEach(x=>{URL.revokeObjectURL(x.url);imageCache.delete(x.url);});state.media=[];invalidateSync();invalidateSync();state.durations=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";invalidateSync();state.selected=0;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;state.audioFile=null;audio.removeAttribute("src");audio.load();updateUI();ctx.clearRect(0,0,canvas.width,canvas.height);toast("Proyecto nuevo preparado.");};
 
 let lastDownloadUrl=null;
-function showVideoDownload(blob,filename){
- if(lastDownloadUrl)URL.revokeObjectURL(lastDownloadUrl);
- lastDownloadUrl=URL.createObjectURL(blob);
+const retainedDownloadUrls=[];
+async function chooseVideoSaveTarget(filename){
+ if(typeof window.showSaveFilePicker!=="function")return null;
+ try{
+  return await window.showSaveFilePicker({suggestedName:filename,types:[{description:"Video MP4",accept:{"video/mp4":[".mp4"]}}]});
+ }catch(error){
+  if(error&&error.name==="AbortError")return false;
+  console.warn("No se pudo abrir el selector de guardado; se usará la descarga normal.",error);
+  return null;
+ }
+}
+async function showVideoDownload(blob,filename,saveHandle){
+ if(!blob||blob.size<1024)throw Error("El archivo de video está vacío o incompleto.");
+ if(saveHandle){
+  const writable=await saveHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+  toast("Video guardado correctamente en la ubicación elegida.");
+  const link=$("downloadVideoLink");link.hidden=true;link.removeAttribute("href");
+  return;
+ }
+ const url=URL.createObjectURL(blob);
+ retainedDownloadUrls.push(url);
+ lastDownloadUrl=url;
  const link=$("downloadVideoLink");
- link.href=lastDownloadUrl;
- link.download=filename;
- link.hidden=false;
+ link.href=url;link.download=filename;link.hidden=false;
  link.textContent="↓ DESCARGAR VIDEO MP4";
  link.focus({preventScroll:true});
- toast("Video listo. Pulsa «Descargar video MP4» para guardarlo.");
+ const anchor=document.createElement("a");
+ anchor.href=url;anchor.download=filename;anchor.style.display="none";
+ document.body.append(anchor);anchor.click();anchor.remove();
+ toast("Video generado. La descarga se ha iniciado; si el navegador la bloquea, pulsa «Descargar video MP4».");
 }
 async function exportMP4(){
  if(state.exporting)return;
+ const saveHandle=await chooseVideoSaveTarget("editor-oscuro-studio.mp4");
+ if(saveHandle===false)return;
  if(!state.media.length||!state.audioFile){toast("Importa escenas y una narración antes de exportar.");return;}
  if(state.mode!=="manual"&&!state.textLines.length){toast("Para sincronizar automáticamente carga un TXT.");return;}
  if(state.mode==="srt"&&!state.cues.length){toast("Para sincronizar exactamente carga también un SRT.");return;}
@@ -321,7 +345,7 @@ async function exportMP4(){
    finalBlob=new Blob([data],{type:"video/mp4"});
   }
   if(!finalBlob||finalBlob.size<1024)throw Error("El video generado está vacío o incompleto.");
-  showVideoDownload(finalBlob,"editor-oscuro-studio.mp4");
+  await showVideoDownload(finalBlob,"editor-oscuro-studio.mp4",saveHandle);
  }catch(e){console.error(e);toast("No se pudo exportar: "+(e?.message||"error del navegador"));}finally{if(recorder&&recorder.state!=="inactive")try{recorder.stop();}catch{}if(audioContext&&audioContext.state!=="closed")await audioContext.close().catch(()=>{});stream?.getTracks().forEach(t=>t.stop());ffmpeg?.terminate();state.exporting=false;$("exportBtn").disabled=$("createVideoBtn").disabled=false;}
 }
 $("exportBtn").onclick=exportMP4;$("createVideoBtn").onclick=exportMP4;
