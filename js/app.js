@@ -196,10 +196,17 @@ function updateUI(){
   const list=$("sceneList");list.innerHTML="";
   if(!state.media.length){list.innerHTML='<div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div>';}
   state.media.forEach((item,i)=>{
-    const card=document.createElement("button");card.type="button";card.className="scene-card";card.addEventListener("click",()=>{pause();state.selected=i;render(sceneStart(i));});
-    const thumb=document.createElement(item.kind==="video"?"video":"img");thumb.src=item.url;if(item.kind==="video"){thumb.muted=true;thumb.preload="metadata";}else thumb.alt=item.name;
-    const label=document.createElement("div");label.textContent=`${String(i+1).padStart(2,"0")} · ${item.name}`;card.append(thumb,label);
-    const durationInput=document.createElement("input");durationInput.type="number";durationInput.min=".5";durationInput.step=".5";durationInput.value=state.durations[i];durationInput.title="Duración en segundos";durationInput.style.cssText="width:calc(100% - 16px);margin:0 8px 8px;background:#101522;color:white;border:1px solid #343c50;border-radius:5px;padding:6px";durationInput.disabled=state.mode==="srt";durationInput.addEventListener("change",()=>{const v=Number(durationInput.value);if(v>=.5){state.durations[i]=v;updateUI();render(audio.currentTime||0);}});card.append(durationInput);list.append(card);
+    const card=document.createElement("div");card.className="scene-card"+(state.selected===i?" selected":"");
+    const selectScene=()=>{pause();state.selected=i;const target=sceneStart(i);if(audio.src)audio.currentTime=target;render(target);updateUI();};
+    const thumbButton=document.createElement("button");thumbButton.type="button";thumbButton.className="scene-thumb-button";thumbButton.title="Ir a la escena "+(i+1);thumbButton.addEventListener("click",selectScene);
+    const thumb=document.createElement(item.kind==="video"?"video":"img");thumb.src=item.url;if(item.kind==="video"){thumb.muted=true;thumb.preload="metadata";}else thumb.alt="";
+    thumbButton.append(thumb);card.append(thumbButton);
+    const label=document.createElement("div");label.className="scene-label";label.textContent=String(i+1).padStart(2,"0")+" · "+item.name;label.title=item.name;card.append(label);
+    const durationRow=document.createElement("label");durationRow.className="scene-duration-row";
+    const durationCaption=document.createElement("span");durationCaption.textContent="DURACIÓN";
+    const durationInput=document.createElement("input");durationInput.type="number";durationInput.min=".5";durationInput.step=".1";durationInput.value=(state.mode==="srt"?sceneDuration(i):state.durations[i]||5).toFixed(2);durationInput.title="Duración de esta escena en segundos";durationInput.setAttribute("aria-label","Duración de la escena "+(i+1)+" en segundos");durationInput.disabled=state.mode==="srt";durationInput.addEventListener("click",e=>e.stopPropagation());durationInput.addEventListener("change",()=>{const v=Number(durationInput.value);if(v>=.5){state.durations[i]=v;invalidateSync();updateUI();render(audio.currentTime||0);}else durationInput.value=(state.durations[i]||5).toFixed(2);});
+    durationRow.append(durationCaption,durationInput);card.append(durationRow);
+    card.addEventListener("dblclick",selectScene);list.append(card);
   });
   updateClock(audio.currentTime||0);
 }
