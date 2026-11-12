@@ -11,24 +11,23 @@ Editor de vídeo en el navegador, preparado para GitHub Pages. No requiere insta
 
 URL esperada: https://mijomicholo-gif.github.io/editor-oscuro-studio/
 
-## Funciones disponibles en esta versión
+## Funciones y flujo de trabajo
 
-- Importación de imágenes, GIF y clips de vídeo; orden numérico de archivos.
-- Carga de narración, música de fondo, TXT y SRT.
-- Modo manual, distribución automática ponderada por palabras y sincronización por coincidencia de texto con marcas SRT.
-- Vista previa de escenas, selector de escenas y controles de reproducción.
-- Pistas visuales, voz, música y subtítulos en una línea de tiempo inicial con control de posición.
-- Música en reproducción y exportación, control de volumen y repetición.
-- Movimientos globales tipo zoom y desplazamiento.
-- Subtítulos SRT con estilos básicos y palabra activa en previsualización.
-- Formatos 16:9 y 9:16; exportación 720p/1080p y opción 4K experimental.
-- Exportación mediante MediaRecorder y conversión con FFmpeg.wasm cuando sea necesaria.
+- Importación por carpeta o archivos sueltos; orden natural de nombres y prevención de duplicados.
+- Carga de narración MP3/WAV/M4A y sincronización de escenas con TXT + SRT.
+- El TXT puede contener una frase por línea o bloques con etiquetas de escena y voz.
+- El SRT admite marcas de tiempo con coma o punto decimal, subtítulos multilínea y etiquetas.
+- La sincronización compara texto normalizado (acentos, mayúsculas y puntuación) y valida coincidencias; no sustituye silenciosamente una sincronización exacta por tiempos inventados.
+- Vista previa, navegación por tiempo, pistas de escenas/voz/música/subtítulos.
+- Música y subtítulos son opcionales y solo se incluyen si se activan.
+- Formatos 16:9 y 9:16, movimientos de cámara y transiciones disponibles.
+- Exportación MP4 mediante MediaRecorder y conversión con FFmpeg.wasm cuando el navegador no genera MP4 nativo.
 
-## Limitaciones conocidas
+## Calidad y límites técnicos
 
-Esta versión es una base mejorada, no un editor profesional terminado. La sincronización SRT intenta emparejar cada línea TXT con secuencias de palabras de los subtítulos; si no hay coincidencia, distribuye las escenas proporcionalmente. La edición multipista todavía no permite arrastrar y recortar clips con handles, los movimientos se aplican globalmente y no hay keyframes individuales ni transiciones completas. El guardado persistente del proyecto está pendiente.
+La sincronización por TXT + SRT solo puede ser tan precisa como las marcas de tiempo del SRT. Si un SRT no contiene el texto o no coincide con el guion, el editor muestra un error y no inventa tiempos. La exportación de videos largos o 4K depende de la memoria disponible del navegador y del códec soportado; para proyectos extensos se recomienda cerrar otras pestañas y exportar en 1080p.
 
-La exportación MP4 depende de los códecs disponibles en el navegador; si MediaRecorder no genera MP4 nativo, se usa FFmpeg.wasm para convertir WebM a MP4. Los proyectos largos y 4K pueden superar la memoria disponible. Conserva los originales.
+El repositorio ejecuta pruebas automáticas de regresión de lectura SRT y correspondencia de escenas antes de publicar. Esto reduce errores de código, pero no sustituye una prueba visual en el navegador con cada combinación de archivos y códecs.
 
 ## Desarrollo
 
