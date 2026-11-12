@@ -7,7 +7,7 @@ const canvas = $("previewCanvas");
 const ctx = canvas.getContext("2d");
 const state = {
   media: [], audioFile:null, audioUrl:null, musicFile:null, musicUrl:null, textLines:[], textName:"",
-  cues:[], srtName:"", ratio:"16:9", mode:"manual", selected:0,
+  cues:[], srtName:"", ratio:"16:9", mode:"srt", selected:0,
   playing:false, raf:0, lastFrame:0, motion:"Sin movimiento",
   quality:"Full HD · 1080p", subtitleStyle:"Karaoke profesional",
   highlight:"#ffd84a", durations:[], transition:"none", transitionDuration:.8, exporting:false
@@ -24,34 +24,41 @@ function fmt(value){
   return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(cs).padStart(2,"0")}`;
 }
 function normalizeWords(text){
-  return (text.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").match(/[a-z0-9]+/g)||[]);
+  return String(text||"").toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"").match(/[a-z0-9]+/g)||[];
+}
+function getExactSync(){
+  if(!state.media.length)return {ok:false,error:"Importa primero las imágenes en el orden correcto."};
+  if(!state.textLines.length||!state.cues.length)return {ok:false,error:"Carga el TXT y el SRT para sincronizar las escenas."};
+  if(state.textLines.length!==state.media.length)return {ok:false,error:"El TXT tiene "+state.textLines.length+" líneas y hay "+state.media.length+" escenas. Debe existir una línea por escena."};
+  const tokens=[];
+  state.cues.forEach(cue=>normalizeWords(cue.text).forEach(word=>tokens.push({word,start:cue.start,end:cue.end})));
+  if(!tokens.length)return {ok:false,error:"El SRT no contiene palabras válidas."};
+  const timings=[];let cursor=0;
+  for(let scene=0;scene<state.textLines.length;scene++){
+    const wanted=normalizeWords(state.textLines[scene]);
+    if(!wanted.length)return {ok:false,error:"La línea "+(scene+1)+" del TXT no contiene palabras reconocibles."};
+    let found=-1;
+    search:for(let i=cursor;i<=tokens.length-wanted.length;i++){
+      for(let j=0;j<wanted.length;j++)if(tokens[i+j].word!==wanted[j])continue search;
+      found=i;break;
+    }
+    if(found<0)return {ok:false,error:"No se encontró la escena "+(scene+1)+" del TXT dentro del SRT. Revisa que ambos archivos contengan el mismo texto y orden. No se aplicó una sincronización aproximada."};
+    const first=tokens[found],last=tokens[found+wanted.length-1];
+    if(!(Number.isFinite(first.start)&&Number.isFinite(last.end)&&last.end>first.start))return {ok:false,error:"Los tiempos de la escena "+(scene+1)+" no son válidos en el SRT."};
+    timings.push({start:first.start,end:last.end});cursor=found+wanted.length;
+  }
+  return {ok:true,timings};
 }
 function buildSceneTimings(){
   if(!state.media.length)return [];
-  if(state.mode==="manual"||!state.textLines.length||!state.cues.length){
-    if(state.mode==="auto"&&state.textLines.length){const duration=audio.duration||state.textLines.length*5;const weights=state.textLines.map(line=>Math.max(1,normalizeWords(line).length));const total=weights.reduce((a,b)=>a+b,0);let used=0;return state.media.map((_,i)=>{const start=duration*used/total;used+=weights[i]||1;return {start,end:duration*used/total};});}
-    let cursor=0;return state.media.map((_,i)=>{const start=cursor;cursor+=state.durations[i]||5;return {start,end:cursor};});
+  if(state.mode==="srt"){const result=getExactSync();return result.ok?result.timings:[];}
+  if(state.mode==="auto"&&state.textLines.length){
+    if(state.textLines.length!==state.media.length||!Number.isFinite(audio.duration)||audio.duration<=0)return [];
+    const weights=state.textLines.map(line=>Math.max(1,normalizeWords(line).length));
+    const total=weights.reduce((x,y)=>x+y,0);let used=0;
+    return state.media.map((_,i)=>{const start=audio.duration*used/total;used+=weights[i];return {start,end:audio.duration*used/total};});
   }
-  if(state.textLines.length!==state.media.length)return [];
-  const tokens=[];
-  state.cues.forEach((cue,cueIndex)=>normalizeWords(cue.text).forEach(word=>tokens.push({word,cueIndex,start:cue.start,end:cue.end})));
-  const timings=[];let cursor=0,exact=true;
-  for(const line of state.textLines){
-    const wanted=normalizeWords(line);if(!wanted.length){exact=false;break;}
-    let found=-1;
-    outer:for(let i=cursor;i<=tokens.length-wanted.length;i++){
-      for(let j=0;j<wanted.length;j++)if(tokens[i+j].word!==wanted[j])continue outer;
-      found=i;break;
-    }
-    if(found<0){exact=false;break;}
-    timings.push({start:tokens[found].start,end:tokens[found+wanted.length-1].end});
-    cursor=found+wanted.length;
-  }
-  if(exact&&timings.length===state.media.length)return timings;
-  const weights=state.textLines.map(line=>Math.max(1,normalizeWords(line).length));
-  const total=weights.reduce((sum,n)=>sum+n,0),start=state.cues[0].start;
-  const end=state.cues[state.cues.length-1].end,span=end-start;let used=0;
-  return weights.map(weight=>{const from=start+span*used/total;used+=weight;return {start:from,end:start+span*used/total};});
+  let cursor=0;return state.media.map((_,i)=>{const start=cursor;cursor+=state.durations[i]||5;return {start,end:cursor};});
 }
 function totalDuration(){
   if(state.mode==="srt"&&state.cues.length)return Math.max(audio.duration||0,state.cues[state.cues.length-1].end);
@@ -183,7 +190,8 @@ function updateUI(){
   $("voiceTrack").innerHTML=state.audioFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin narración</span>';if(state.audioFile)$("voiceTrack").firstChild.textContent=state.audioFile.name;
   $("musicTrack").innerHTML=state.musicFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin música</span>';if(state.musicFile)$("musicTrack").firstChild.textContent=state.musicFile.name;
   $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;$("subtitleTrack").append(chip);});
-  $("syncStatus").textContent=[state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.";
+  const syncCheck=state.mode==="srt"?getExactSync():null;
+  $("syncStatus").textContent=syncCheck&&!syncCheck.ok?syncCheck.error:([state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.");
   for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(state.textName&&state.srtName)]]){
     const el=$(id);el.textContent=done?"COMPLETADO":"PENDIENTE";el.classList.toggle("done",done);
   }
