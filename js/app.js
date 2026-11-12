@@ -68,7 +68,12 @@ function sceneDuration(index){
   if(state.mode==="srt"){const timing=buildSceneTimings()[index];return timing?Math.max(.05,timing.end-timing.start):.5;}
   return state.durations[index]||5;
 }
-function loadImg(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});}
+const imageCache=new Map();
+function loadImg(url){
+ if(imageCache.has(url))return imageCache.get(url);
+ const promise=new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});
+ imageCache.set(url,promise);return promise;
+}
 function activeVideo(){
   if(!previewVideo){previewVideo=document.createElement("video");previewVideo.muted=true;previewVideo.playsInline=true;previewVideo.preload="auto";previewVideo.style.display="none";document.body.append(previewVideo);}
   return previewVideo;
@@ -161,9 +166,13 @@ function pause(){state.playing=false;cancelAnimationFrame(state.raf);audio.pause
 function importMedia(files){
   const accepted=[...files].filter(f=>f.type.startsWith("image/")||f.type.startsWith("video/")||/\.(jpg|jpeg|png|webp|gif|mp4|webm|mov|m4v)$/i.test(f.name));
   accepted.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"}));
-  accepted.forEach(file=>state.media.push({file,url:URL.createObjectURL(file),name:file.name,kind:file.type.startsWith("video/")||/\.(mp4|webm|mov|m4v)$/i.test(file.name)?"video":"image"}));
-  state.durations=state.media.map((_,i)=>state.durations[i]||5);
-  updateUI();if(state.media.length)render(0);toast(accepted.length?`${accepted.length} archivo(s) añadidos.`:"No se encontraron medios compatibles.");
+  const previousDurations=new Map(state.media.map((item,i)=>[item.name,state.durations[i]||5]));
+  const known=new Set(state.media.map(item=>item.name+"|"+item.file.size+"|"+item.file.lastModified));
+  const added=accepted.filter(file=>!known.has(file.name+"|"+file.size+"|"+file.lastModified));
+  added.forEach(file=>state.media.push({file,url:URL.createObjectURL(file),name:file.name,kind:file.type.startsWith("video/")||/\.(mp4|webm|mov|m4v)$/i.test(file.name)?"video":"image"}));
+  state.media.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"}));
+  state.durations=state.media.map(item=>previousDurations.get(item.name)||5);invalidateSync();
+  updateUI();if(state.media.length)render(0);toast(added.length?`${added.length} archivo(s) añadidos sin duplicados.`:accepted.length?"Esos archivos ya estaban importados.":"No se encontraron medios compatibles.");
 }
 function updateUI(){
   const images=state.media.filter(x=>x.kind==="image").length;
@@ -235,7 +244,7 @@ $("motionSelect").onchange=e=>{state.motion=e.target.value;render(audio.currentT
 $("qualitySelect").onchange=e=>state.quality=e.target.value;
 document.querySelectorAll("#subtitleStyles .chip").forEach(chip=>chip.onclick=()=>{document.querySelectorAll("#subtitleStyles .chip").forEach(x=>x.classList.remove("active"));chip.classList.add("active");state.subtitleStyle=chip.textContent.trim();render(audio.currentTime||0);});
 document.querySelectorAll("#wordColors .color-chip").forEach(chip=>chip.onclick=()=>{document.querySelectorAll("#wordColors .color-chip").forEach(x=>x.classList.remove("active"));chip.classList.add("active");state.highlight=chip.dataset.color;render(audio.currentTime||0);});
-$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se eliminarán los archivos cargados."))return;pause();state.media.forEach(x=>URL.revokeObjectURL(x.url));state.media=[];invalidateSync();state.durations=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";invalidateSync();state.selected=0;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;state.audioFile=null;audio.removeAttribute("src");audio.load();updateUI();ctx.clearRect(0,0,canvas.width,canvas.height);toast("Proyecto nuevo preparado.");};
+$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se eliminarán los archivos cargados."))return;pause();state.media.forEach(x=>{URL.revokeObjectURL(x.url);imageCache.delete(x.url);});state.media=[];invalidateSync();invalidateSync();state.durations=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";invalidateSync();state.selected=0;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;state.audioFile=null;audio.removeAttribute("src");audio.load();updateUI();ctx.clearRect(0,0,canvas.width,canvas.height);toast("Proyecto nuevo preparado.");};
 
 let lastDownloadUrl=null;
 function showVideoDownload(blob,filename){
