@@ -35,3 +35,14 @@
 
 /* Las escenas y subtítulos ocupan espacio proporcional a su duración */
 .timeline-clip,.timeline-subtitle{min-width:28px;max-width:none;flex-shrink:0;overflow:hidden;text-overflow:ellipsis}
+
+
+/* Scene cards: one filename, a clear scene index and the actual synced duration */
+.scene-card{min-width:0;padding:0;display:flex;flex-direction:column;text-align:left}
+.scene-card.selected{border-color:#a78bfa;box-shadow:0 0 0 1px #a78bfa66}
+.scene-thumb-button{display:block;width:100%;padding:0;border:0;background:#080b11;cursor:pointer}
+.scene-thumb-button img,.scene-thumb-button video{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.scene-label{padding:9px 9px 5px;font-size:10px;color:#e0e5f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene-duration-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 8px 8px;padding:6px 7px;border:1px solid #30394d;border-radius:6px;background:#101522;color:#9da9bd;font-size:9px;letter-spacing:.08em}
+.scene-duration-row input{width:76px;min-width:0;border:0;outline:0;background:transparent;color:#f1f3fa;text-align:right;font:11px 'DM Mono',monospace}
+.scene-duration-row input:disabled{color:#b9a7ff;opacity:1;cursor:not-allowed}
