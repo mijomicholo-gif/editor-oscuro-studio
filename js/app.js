@@ -164,6 +164,12 @@ function updateUI(){
   $("sceneTotal").textContent=state.media.length;$("sceneFileCount").textContent=`${state.media.length} escenas`;$("playerSceneCount").textContent=state.media.length;
   $("subtitleTotal").textContent=state.cues.length;$("projectDuration").textContent=fmt(totalDuration());
   $("audioName").textContent=state.audioFile?state.audioFile.name:"Aún no hay audio.";
+  $("musicName").textContent=state.musicFile?state.musicFile.name:"Aún no hay música.";$("musicStatus").textContent=state.musicFile?"COMPLETADO":"PENDIENTE";$("musicStatus").classList.toggle("done",!!state.musicFile);
+  $("timelineEnd").textContent=fmt(totalDuration());$("timelineCurrent").textContent=fmt(audio.currentTime||0);$("timelineScrubber").max=Math.max(1,Math.round(totalDuration()*100));$("timelineScrubber").value=Math.round((audio.currentTime||0)*100);
+  const visual=$("visualTrack");visual.innerHTML="";state.media.forEach((item,i)=>{const chip=document.createElement("button");chip.type="button";chip.className="timeline-clip";chip.textContent=String(i+1).padStart(3,"0")+" · "+item.name;chip.title=item.name;chip.onclick=()=>{pause();audio.currentTime=sceneStart(i);render(audio.currentTime);};visual.append(chip);});
+  $("voiceTrack").innerHTML=state.audioFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin narración</span>';if(state.audioFile)$("voiceTrack").firstChild.textContent=state.audioFile.name;
+  $("musicTrack").innerHTML=state.musicFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin música</span>';if(state.musicFile)$("musicTrack").firstChild.textContent=state.musicFile.name;
+  $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;$("subtitleTrack").append(chip);});
   $("syncStatus").textContent=[state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.";
   for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(state.textName&&state.srtName)]]){
     const el=$(id);el.textContent=done?"COMPLETADO":"PENDIENTE";el.classList.toggle("done",done);
@@ -195,6 +201,7 @@ $("musicVolume").oninput=e=>{music.volume=Number(e.target.value)/100;$("musicVol
 $("txtBtn").onclick=()=>$("txtInput").click();$("srtBtn").onclick=()=>$("srtInput").click();
 $("txtInput").onchange=e=>{if(e.target.files[0])loadTxt(e.target.files[0]);e.target.value="";};$("srtInput").onchange=e=>{if(e.target.files[0])loadSrt(e.target.files[0]);e.target.value="";};
 bindDrop("mediaBtn",importMedia);bindDrop("audioBtn",files=>loadAudio([...files].find(f=>f.type.startsWith("audio/")||/\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name))));
+bindDrop("musicBtn",files=>{const f=[...files].find(x=>x.type.startsWith("audio/")||/\.(mp3|wav|m4a|aac|ogg)$/i.test(x.name));if(f){if(state.musicUrl)URL.revokeObjectURL(state.musicUrl);state.musicFile=f;state.musicUrl=URL.createObjectURL(f);music.src=state.musicUrl;music.volume=Number($("musicVolume").value)/100;updateUI();}});
 bindDrop("txtDrop",files=>{const f=[...files].find(x=>x.name.toLowerCase().endsWith(".txt"));if(f)loadTxt(f);});bindDrop("srtDrop",files=>{const f=[...files].find(x=>x.name.toLowerCase().endsWith(".srt"));if(f)loadSrt(f);});
 $("playBtn").onclick=()=>state.playing?pause():play();$("stopBtn").onclick=()=>{pause();audio.currentTime=0;render(0);};$("toStart").onclick=()=>{pause();audio.currentTime=0;render(0);};
 audio.addEventListener("timeupdate",()=>{if(state.playing)render(audio.currentTime);else updateClock(audio.currentTime);});
