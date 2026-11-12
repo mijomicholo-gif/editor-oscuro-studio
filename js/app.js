@@ -188,7 +188,7 @@ function updateUI(){
   $("musicTrack").innerHTML=state.musicFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin música</span>';if(state.musicFile){const musicClip=$("musicTrack").firstChild;musicClip.textContent=state.musicFile.name;musicClip.style.width="100%";}
   $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;chip.title=fmt(cue.start)+" – "+fmt(cue.end);chip.style.flexBasis=Math.max(2,(cue.end-cue.start)/total*100)+"%";$("subtitleTrack").append(chip);});
   const syncCheck=state.mode==="srt"?getExactSync():null;
-  $("syncStatus").textContent=syncCheck&&!syncCheck.ok?syncCheck.error:([state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.");
+  $("syncStatus").textContent=syncCheck&&!syncCheck.ok?syncCheck.error:(syncCheck&&syncCheck.ok?`SINCRONIZACIÓN VALIDADA · ${syncCheck.timings.length}/${state.media.length} escenas · ${fmt(syncCheck.timings[syncCheck.timings.length-1].end)} total`:[state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.");
   for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(state.textName&&state.srtName)]]){
     const el=$(id);el.textContent=done?"COMPLETADO":"PENDIENTE";el.classList.toggle("done",done);
   }
