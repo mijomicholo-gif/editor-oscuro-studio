@@ -10,7 +10,7 @@ const state = {
   cues:[], srtName:"", ratio:"16:9", mode:"manual", selected:0,
   playing:false, raf:0, lastFrame:0, motion:"Sin movimiento",
   quality:"Full HD · 1080p", subtitleStyle:"Karaoke profesional",
-  highlight:"#ffd84a", durations:[], exporting:false
+  highlight:"#ffd84a", durations:[], transition:"none", transitionDuration:.8, exporting:false
 };
 let previewVideo=null, toastTimer=null, drawToken=0;
 
@@ -82,11 +82,12 @@ function activeVideo(){
   if(!previewVideo){previewVideo=document.createElement("video");previewVideo.muted=true;previewVideo.playsInline=true;previewVideo.preload="auto";previewVideo.style.display="none";document.body.append(previewVideo);}
   return previewVideo;
 }
-function drawCover(source, progress=0, motion=state.motion){
+function drawCover(source, progress=0, motion=state.motion, clear=true, alpha=1, offsetX=0, zoomExtra=1){
   const sw=source.videoWidth||source.naturalWidth||source.width,sh=source.videoHeight||source.naturalHeight||source.height;
   if(!sw||!sh)return;
-  ctx.fillStyle="#05070b";ctx.fillRect(0,0,canvas.width,canvas.height);
-  let factor=1,x=0,y=0;
+  if(clear){ctx.fillStyle="#05070b";ctx.fillRect(0,0,canvas.width,canvas.height);}
+  ctx.save();ctx.globalAlpha=alpha;
+  let factor=zoomExtra,x=offsetX,y=0;
   if(motion==="Zoom lento de acercamiento")factor=1+progress*.12;
   if(motion==="Zoom lento de alejamiento")factor=1.12-progress*.12;
   if(motion==="Movimiento cinematográfico")factor=1.06+progress*.08;
@@ -95,9 +96,10 @@ function drawCover(source, progress=0, motion=state.motion){
   if(motion==="Desplazamiento hacia arriba"){factor=1.14;y=(.5-progress)*canvas.height*.12;}
   if(motion==="Desplazamiento hacia abajo"){factor=1.14;y=(progress-.5)*canvas.height*.12;}
   const scale=Math.max(canvas.width/sw,canvas.height/sh)*factor,w=sw*scale,h=sh*scale;
-  ctx.drawImage(source,(canvas.width-w)/2+x,(canvas.height-h)/2+y,w,h);
+  ctx.drawImage(source,(canvas.width-w)/2+x,(canvas.height-h)/2+y,w,h);ctx.restore();
 }
 function drawSubtitle(time){
+  if(!$("includeSubtitles").checked)return;
   const cue=state.cues.find(c=>time>=c.start&&time<c.end);if(!cue)return;
   const words=cue.text.trim().split(/\s+/),elapsed=Math.max(0,time-cue.start),duration=Math.max(.001,cue.end-cue.start);
   const weights=words.map(w=>Math.max(1,w.length)),target=elapsed/duration*weights.reduce((a,b)=>a+b,0);
@@ -122,7 +124,18 @@ async function render(time=audio.currentTime||0){
   try{
     if(item.kind==="image"){
       if(previewVideo){previewVideo.pause();previewVideo.removeAttribute("src");}
-      const img=await loadImg(item.url);if(token!==drawToken)return;drawCover(img,progress);drawSubtitle(time);
+      const img=await loadImg(item.url);if(token!==drawToken)return;
+      const transitionSeconds=Math.min(state.transitionDuration,span*.45);
+      const transitionProgress=transitionSeconds>0?Math.max(0,Math.min(1,(time-start)/transitionSeconds)):1;
+      const previous=state.media[index-1];
+      if(index>0&&previous?.kind==="image"&&state.transition!=="none"&&transitionProgress<1){
+        const prevImg=await loadImg(previous.url);if(token!==drawToken)return;
+        drawCover(prevImg,1,state.motion,true,1);
+        if(state.transition==="slide")drawCover(img,progress,state.motion,false,1,canvas.width*(1-transitionProgress),1);
+        else if(state.transition==="zoom")drawCover(img,progress,state.motion,false,transitionProgress,0,1.18-.18*transitionProgress);
+        else drawCover(img,progress,state.motion,false,transitionProgress);
+      }else drawCover(img,progress);
+      drawSubtitle(time);
     }else{
       const v=activeVideo();
       if(v.dataset.url!==item.url){v.pause();v.src=item.url;v.dataset.url=item.url;v.load();await new Promise(resolve=>{if(v.readyState>=2)return resolve();v.addEventListener("loadeddata",resolve,{once:true});v.addEventListener("error",resolve,{once:true});});}
@@ -147,7 +160,7 @@ function tick(){
 }
 function play(){
   if(!state.media.length){toast("Importa primero tus imágenes o clips.");return;}
-  if(audio.src){audio.play().then(()=>{state.playing=true;$("playBtn").textContent="Ⅱ";if(music.src){music.volume=Number($("musicVolume").value)/100;music.play().catch(()=>{});}tick();}).catch(()=>toast("No se pudo reproducir el audio."));}
+  if(audio.src){audio.play().then(()=>{state.playing=true;$("playBtn").textContent="Ⅱ";if(music.src&&$("includeMusic").checked){music.volume=Number($("musicVolume").value)/100;music.play().catch(()=>{});}tick();}).catch(()=>toast("No se pudo reproducir el audio."));}
   else{state.lastFrame=performance.now()/1000;$("playBtn").textContent="Ⅱ";state.playing=true;tick();}
 }
 function pause(){state.playing=false;cancelAnimationFrame(state.raf);audio.pause();music.pause();if(previewVideo)previewVideo.pause();$("playBtn").textContent="▶";render(audio.currentTime||0);}
@@ -208,6 +221,10 @@ audio.addEventListener("timeupdate",()=>{if(state.playing)render(audio.currentTi
 audio.addEventListener("ended",pause);
 $("timelineScrubber").oninput=e=>{pause();audio.currentTime=Number(e.target.value)/100;render(audio.currentTime);};
 document.querySelectorAll(".format").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".format").forEach(x=>x.classList.remove("active"));btn.classList.add("active");state.ratio=btn.dataset.ratio;const vertical=state.ratio==="9:16";$("previewFrame").classList.toggle("vertical",vertical);canvas.width=vertical?720:1280;canvas.height=vertical?1280:720;render(audio.currentTime||0);updateUI();}));
+$("includeMusic").onchange=()=>{if(!$("includeMusic").checked)music.pause();else if(state.playing&&music.src)music.play().catch(()=>{});toast($("includeMusic").checked?"La música se incluirá en el video.":"La música está desactivada.");};
+$("includeSubtitles").onchange=()=>{render(audio.currentTime||0);toast($("includeSubtitles").checked?"Los subtítulos están activados.":"Los subtítulos están desactivados.");};
+$("transitionSelect").onchange=e=>{state.transition=e.target.value;render(audio.currentTime||0);};
+$("transitionDuration").oninput=e=>{state.transitionDuration=Number(e.target.value);$("transitionDurationValue").textContent=state.transitionDuration.toFixed(1)+" s";render(audio.currentTime||0);};
 $("motionSelect").onchange=e=>{state.motion=e.target.value;render(audio.currentTime||0);};
 $("qualitySelect").onchange=e=>state.quality=e.target.value;
 document.querySelectorAll("#subtitleStyles .chip").forEach(chip=>chip.onclick=()=>{document.querySelectorAll("#subtitleStyles .chip").forEach(x=>x.classList.remove("active"));chip.classList.add("active");state.subtitleStyle=chip.textContent.trim();render(audio.currentTime||0);});
@@ -241,7 +258,7 @@ async function exportMP4(){
   const height=state.ratio==="16:9"?(state.quality.includes("720")?720:1080):(state.quality.includes("720")?1280:1920);
   const work=document.createElement("canvas");work.width=width;work.height=height;const c=work.getContext("2d");
   stream=work.captureStream(24);audioContext=new AudioContext();const decoded=await audioContext.decodeAudioData(await state.audioFile.arrayBuffer());
-  const source=audioContext.createBufferSource(),dest=audioContext.createMediaStreamDestination();source.buffer=decoded;source.connect(dest);let musicSource=null;if(state.musicFile){const mb=await audioContext.decodeAudioData(await state.musicFile.arrayBuffer());musicSource=audioContext.createBufferSource();musicSource.buffer=mb;musicSource.loop=$("musicLoop").checked;const mg=audioContext.createGain();mg.gain.value=Number($("musicVolume").value)/100;musicSource.connect(mg).connect(dest);}dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+  const source=audioContext.createBufferSource(),dest=audioContext.createMediaStreamDestination();source.buffer=decoded;source.connect(dest);let musicSource=null;if(state.musicFile&&$("includeMusic").checked){const mb=await audioContext.decodeAudioData(await state.musicFile.arrayBuffer());musicSource=audioContext.createBufferSource();musicSource.buffer=mb;musicSource.loop=$("musicLoop").checked;const mg=audioContext.createGain();mg.gain.value=Number($("musicVolume").value)/100;musicSource.connect(mg).connect(dest);}dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
   const mp4Types=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1.42E01E","video/mp4"];
   const nativeMp4=mp4Types.find(type=>MediaRecorder.isTypeSupported(type));
   const mime=nativeMp4||(MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")?"video/webm;codecs=vp9,opus":"video/webm");
@@ -251,9 +268,17 @@ async function exportMP4(){
   function paint(t){
    const idx=sceneAt(t),start=sceneStart(idx),span=sceneDuration(idx),m=cache[idx];
    if(m instanceof HTMLVideoElement){const local=t-start;if(Math.abs(m.currentTime-Math.min(local,m.duration||0))>.35)m.currentTime=Math.min(local,Math.max(0,(m.duration||.1)-.05));}
-   const sw=m.videoWidth||m.naturalWidth,sh=m.videoHeight||m.naturalHeight;c.fillStyle="#05070b";c.fillRect(0,0,width,height);
-   if(sw&&sh){let z=1,p=Math.max(0,Math.min(1,(t-start)/span)),x=0,y=0;if(state.motion==="Zoom lento de acercamiento")z=1+p*.12;if(state.motion==="Zoom lento de alejamiento")z=1.12-p*.12;if(state.motion==="Movimiento cinematográfico")z=1.06+p*.08;if(state.motion.includes("izquierda")){z=1.14;x=(.5-p)*width*.12;}if(state.motion.includes("derecha")){z=1.14;x=(p-.5)*width*.12;}if(state.motion.includes("arriba")){z=1.14;y=(.5-p)*height*.12;}if(state.motion.includes("abajo")){z=1.14;y=(p-.5)*height*.12;}const sc=Math.max(width/sw,height/sh)*z,dw=sw*sc,dh=sh*sc;c.drawImage(m,(width-dw)/2+x,(height-dh)/2+y,dw,dh);}
-   const cue=state.cues.find(q=>t>=q.start&&t<q.end);if(cue){const words=cue.text.split(/\s+/);const dur=cue.end-cue.start;const total=words.reduce((s,w)=>s+Math.max(1,w.length),0),target=(t-cue.start)/dur*total;let sum=0,active=words.length-1;for(let i=0;i<words.length;i++){sum+=Math.max(1,words[i].length);if(target<sum){active=i;break;}}const fs=width*.027;c.font=`bold ${fs}px Arial`;c.textAlign="center";c.textBaseline="middle";const text=words.join(" ");c.lineWidth=fs*.1;c.strokeStyle="#000";c.strokeText(text,width/2,height*.91);c.fillStyle="#fff";c.fillText(text,width/2,height*.91);}
+   const p=Math.max(0,Math.min(1,(t-start)/span));
+   const drawExportFrame=(source,alpha=1,offsetX=0,extraZoom=1)=>{const sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;if(!sw||!sh)return;let z=extraZoom,x=offsetX,y=0;if(state.motion==="Zoom lento de acercamiento")z*=1+p*.12;if(state.motion==="Zoom lento de alejamiento")z*=1.12-p*.12;if(state.motion==="Movimiento cinematográfico")z*=1.06+p*.08;if(state.motion.includes("izquierda")){z*=1.14;x+=(.5-p)*width*.12;}if(state.motion.includes("derecha")){z*=1.14;x+=(p-.5)*width*.12;}if(state.motion.includes("arriba")){z*=1.14;y=(.5-p)*height*.12;}if(state.motion.includes("abajo")){z*=1.14;y=(p-.5)*height*.12;}const sc=Math.max(width/sw,height/sh)*z,dw=sw*sc,dh=sh*sc;c.save();c.globalAlpha=alpha;c.drawImage(source,(width-dw)/2+x,(height-dh)/2+y,dw,dh);c.restore();};
+   c.fillStyle="#05070b";c.fillRect(0,0,width,height);
+   const transSecs=Math.min(state.transitionDuration,span*.45),transP=transSecs>0?Math.max(0,Math.min(1,(t-start)/transSecs)):1,prev=cache[idx-1];
+   if(idx>0&&m instanceof HTMLImageElement&&prev instanceof HTMLImageElement&&state.transition!=="none"&&transP<1){
+    drawExportFrame(prev,1);
+    if(state.transition==="slide")drawExportFrame(m,1,width*(1-transP),1);
+    else if(state.transition==="zoom")drawExportFrame(m,transP,0,1.18-.18*transP);
+    else drawExportFrame(m,transP);
+   }else drawExportFrame(m,1);
+   const cue=$("includeSubtitles").checked?state.cues.find(q=>t>=q.start&&t<q.end):null;if(cue){const words=cue.text.split(/\s+/);const dur=cue.end-cue.start;const total=words.reduce((s,w)=>s+Math.max(1,w.length),0),target=(t-cue.start)/dur*total;let sum=0,active=words.length-1;for(let i=0;i<words.length;i++){sum+=Math.max(1,words[i].length);if(target<sum){active=i;break;}}const fs=width*.027;c.font=`bold ${fs}px Arial`;c.textAlign="center";c.textBaseline="middle";const text=words.join(" ");c.lineWidth=fs*.1;c.strokeStyle="#000";c.strokeText(text,width/2,height*.91);c.fillStyle="#fff";c.fillText(text,width/2,height*.91);}
   }
   const length=Math.max(decoded.duration,totalDuration());await audioContext.resume();recorder.start(250);source.start();if(musicSource)musicSource.start();const startAt=audioContext.currentTime;
   while(audioContext.currentTime-startAt<length){const t=audioContext.currentTime-startAt;paint(t);setProgress(Math.min(65,5+Math.floor(t/length*60)),"Montando escenas");await new Promise(r=>requestAnimationFrame(r));}
