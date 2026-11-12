@@ -12,7 +12,7 @@
 .left-workspace .summary-strip{margin:0;grid-template-columns:repeat(3,minmax(0,1fr))}
 .left-workspace .summary-strip .create-button{grid-column:1/-1;width:100%}
 .left-workspace .summary-strip .export-note{grid-column:1/-1}
-.right-workspace .player-panel{margin:0;position:-webkit-sticky;position:sticky;top:82px;align-self:flex-start;width:100%;max-height:calc(100vh - 98px);overflow-y:auto;overscroll-behavior:contain;z-index:15;scrollbar-width:thin;scrollbar-color:#4b4262 transparent}
+.right-workspace .player-panel{margin:0;position:-webkit-sticky;position:sticky;top:82px;align-self:flex-start;width:100%;z-index:15}
 .right-workspace .scenes-panel{margin:0}
 .right-workspace .player-stage{min-height:180px;padding:10px}
 .right-workspace .preview-frame{width:100%}
@@ -30,5 +30,5 @@
 
 .optional-toggle{display:flex;gap:9px;align-items:flex-start;margin:12px 0;padding:11px 12px;border:1px solid #343c50;border-radius:8px;background:#171d2a;cursor:pointer}.optional-toggle input{accent-color:#a78bfa;margin-top:3px}.optional-toggle b{display:block;font-size:10px}.optional-toggle small{display:block;color:#929db2;font-size:9px;margin-top:4px;line-height:1.45}
 
-/* Monitor fijo durante el desplazamiento del espacio de trabajo en escritorio */
-@media(min-width:901px){.workspace-columns{align-items:stretch}.right-workspace{align-self:stretch;min-height:100%}.right-workspace .player-panel{position:sticky!important;top:82px!important;align-self:flex-start!important;flex:0 0 auto!important}}
+/* El contenedor derecho se estira a la altura de la columna de edición. El monitor queda sticky dentro de ese recorrido. */
+@media(min-width:901px){.workspace-columns{align-items:stretch}.right-workspace{align-self:stretch;min-height:0}.right-workspace .player-panel{position:sticky;top:82px;align-self:flex-start;flex:0 0 auto}}
