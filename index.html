@@ -29,20 +29,28 @@
    <input class="native-file-input" id="audioInput" type="file" accept="audio/*">
    <div class="panel-foot" id="audioName">Aún no hay audio.</div>
   </section>
+  <section class="panel">
+   <div class="panel-head"><span class="step">02B</span><div><h2>Música de fondo</h2><p>Añade una pista musical independiente de la narración.</p></div><span class="status" id="musicStatus">PENDIENTE</span></div>
+   <button class="dropzone audio-drop" id="musicBtn" type="button"><span class="drop-icon">♫</span><strong>Arrastra aquí la música de fondo</strong><small>MP3 · WAV · M4A · AAC · OGG</small><span class="mini-button">Seleccionar música</span></button>
+   <input class="native-file-input" id="musicInput" type="file" accept="audio/*">
+   <div class="setting-block"><label class="setting-title" for="musicVolume">Volumen de música <output id="musicVolumeValue">18%</output></label><input id="musicVolume" type="range" min="0" max="100" value="18"></div>
+   <label class="sync-options"><input id="musicLoop" type="checkbox" checked> <span><b>Repetir música hasta el final</b><small>La pista se repite si es más corta que la narración.</small></span></label>
+   <div class="panel-foot" id="musicName">Aún no hay música.</div>
+  </section>
   <section class="panel sync-panel">
    <div class="panel-head"><span class="step">03</span><div><h2>Sincronización de escenas</h2><p>Conecta cada escena con su frase y sus tiempos.</p></div><span class="status" id="syncStatusBadge">PENDIENTE</span></div>
    <div class="sync-files">
     <div class="sync-file"><div class="file-type">TXT</div><div class="sync-copy"><strong>Guion de escenas</strong><small>Una línea de texto por cada escena, en el mismo orden.</small></div><button class="mini-button" id="txtBtn" type="button">Seleccionar TXT</button><input class="native-file-input" id="txtInput" type="file" accept=".txt,text/plain"><div class="file-drop" id="txtDrop">Arrastra aquí tu archivo .TXT</div></div>
     <div class="sync-file"><div class="file-type srt">SRT</div><div class="sync-copy"><strong>Subtítulos con tiempos</strong><small>Archivo de subtítulos con los tiempos de cada frase.</small></div><button class="mini-button" id="srtBtn" type="button">Seleccionar SRT</button><input class="native-file-input" id="srtInput" type="file" accept=".srt,application/x-subrip,text/plain"><div class="file-drop" id="srtDrop">Arrastra aquí tu archivo .SRT</div></div>
    </div>
-   <div class="sync-options"><label><input type="radio" name="syncMode" value="manual" checked> <span><b>Duración manual</b><small>Ajusta los segundos de cada escena.</small></span></label><label><input type="radio" name="syncMode" value="srt"> <span><b>Sincronizar con TXT + SRT</b><small>Utiliza los tiempos del archivo SRT.</small></span></label></div>
+   <div class="sync-options"><label><input type="radio" name="syncMode" value="manual" checked> <span><b>Duración manual</b><small>Ajusta los segundos de cada escena.</small></span></label><label><input type="radio" name="syncMode" value="auto"> <span><b>Automática con TXT</b><small>Distribuye escenas según el texto y la duración de la voz.</small></span></label><label><input type="radio" name="syncMode" value="srt"> <span><b>Exacta con TXT + SRT</b><small>Utiliza las marcas de tiempo del archivo SRT.</small></span></label></div>
    <div class="panel-foot" id="syncStatus">Sin archivos de sincronización.</div>
   </section>
   <section class="panel settings-panel">
    <div class="panel-head"><span class="step">04</span><div><h2>Formato y calidad</h2><p>Configura las dimensiones y el acabado del video.</p></div><span class="status done">COMPLETADO</span></div>
    <div class="setting-block"><div class="setting-title">Formato de video</div><div class="format-switch"><button class="format active" data-ratio="16:9">Horizontal 16:9<small>YouTube y pantallas</small><em>✓ Seleccionado</em></button><button class="format" data-ratio="9:16">Vertical 9:16<small>Shorts · Reels · TikTok</small></button></div></div>
    <div class="setting-block"><label class="setting-title" for="motionSelect">Movimiento de escenas</label><select id="motionSelect"><option>Sin movimiento</option><option>Zoom lento de acercamiento</option><option>Zoom lento de alejamiento</option><option>Desplazamiento hacia la izquierda</option><option>Desplazamiento hacia la derecha</option><option>Desplazamiento hacia arriba</option><option>Desplazamiento hacia abajo</option><option>Movimiento cinematográfico</option></select></div>
-   <div class="setting-block"><label class="setting-title" for="qualitySelect">Resolución de exportación</label><select id="qualitySelect"><option>Full HD · 1080p</option><option>HD · 720p</option></select></div>
+   <div class="setting-block"><label class="setting-title" for="qualitySelect">Resolución de exportación</label><select id="qualitySelect"><option>Full HD · 1080p</option><option>HD · 720p</option><option>4K · 2160p (experimental)</option></select></div>
    <div class="setting-block"><div class="setting-title">Estilo de subtítulos</div><div class="chip-row" id="subtitleStyles"><button class="chip active">Karaoke profesional</button><button class="chip">Minimalista</button><button class="chip">Impacto</button><button class="chip">Contorno reforzado</button><button class="chip">Compacto</button></div></div>
    <div class="setting-block"><div class="setting-title">Color de la palabra activa</div><div class="color-row" id="wordColors"><button class="color-chip active" data-color="#ffd84a" style="--swatch:#ffd84a" aria-label="Amarillo"></button><button class="color-chip" data-color="#67cfff" style="--swatch:#67cfff" aria-label="Azul cielo"></button><button class="color-chip" data-color="#59df9a" style="--swatch:#59df9a" aria-label="Verde"></button><button class="color-chip" data-color="#ff789c" style="--swatch:#ff789c" aria-label="Rosa coral"></button><button class="color-chip" data-color="#ad8aff" style="--swatch:#ad8aff" aria-label="Violeta"></button><button class="color-chip" data-color="#ff9c52" style="--swatch:#ff9c52" aria-label="Naranja"></button><button class="color-chip" data-color="#ffffff" style="--swatch:#ffffff" aria-label="Blanco"></button></div><p class="hint">Las palabras normales permanecen blancas. La palabra activa usa el color elegido. Todas llevan contorno negro y no tienen fondo.</p></div>
   </section>
@@ -59,8 +67,13 @@
  <section class="panel scenes-panel"><div class="panel-head"><span class="step">06</span><div><h2>Escenas del proyecto</h2><p>Organiza el orden y la duración de cada escena.</p></div><span class="status" id="scenesStatus">PENDIENTE</span></div><div class="scenes-toolbar"><span>ARCHIVOS IMPORTADOS</span><b id="sceneFileCount">0 escenas</b></div><div class="scene-list" id="sceneList"><div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div></div></section>
  </div>
  </div>
+ <section class="panel timeline-panel">
+  <div class="panel-head"><span class="step">07</span><div><h2>Línea de tiempo</h2><p>Controla la posición de reproducción y revisa la duración del montaje.</p></div><span class="status done">MULTIPISTA</span></div>
+  <div class="timeline-ruler"><span id="timelineCurrent">00:00.00</span><input id="timelineScrubber" type="range" min="0" max="1000" value="0"><span id="timelineEnd">00:00.00</span></div>
+  <div class="timeline-lanes"><div class="lane-label">V1 · ESCENAS</div><div class="lane-track" id="visualTrack"><span class="lane-empty">Importa imágenes y clips para construir la pista visual.</span></div><div class="lane-label">A1 · VOZ</div><div class="lane-track audio-lane" id="voiceTrack"><span class="lane-empty">La forma de onda de la narración aparecerá aquí.</span></div><div class="lane-label">A2 · MÚSICA</div><div class="lane-track audio-lane music-lane" id="musicTrack"><span class="lane-empty">Añade música de fondo para crear esta pista.</span></div><div class="lane-label">T1 · SUBTÍTULOS</div><div class="lane-track subtitle-lane" id="subtitleTrack"><span class="lane-empty">Los bloques SRT aparecerán aquí.</span></div></div>
+ </section>
  <footer class="studio-footer"><span>◈</span><b>VIDEO EDITOR PRO</b><small>ESTUDIO LOCAL DE EDICIÓN</small></footer>
 </main>
-<audio id="voiceAudio" preload="metadata"></audio><div class="toast" id="toast" role="status"></div>
+<audio id="voiceAudio" preload="metadata"></audio><audio id="musicAudio" preload="metadata" loop></audio><div class="toast" id="toast" role="status"></div>
 <script type="module" src="./js/app.js"></script>
 </body></html>
