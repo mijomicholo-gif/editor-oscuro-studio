@@ -24,7 +24,12 @@
   <div class="player-stage"><div class="preview-frame" id="previewFrame"><canvas id="previewCanvas" width="1280" height="720"></canvas><div class="player-empty" id="playerEmpty"><span>▶</span><strong>Tu video aparecerá aquí</strong><small>Importa tus escenas para comenzar</small></div></div></div>
   <div class="player-controls"><span class="timecode" id="currentTime">00:00.00</span><div class="transport-controls"><button id="toStart" title="Ir al inicio">|◀</button><button id="playBtn" class="play-button" title="Reproducir">▶</button><button id="stopBtn" title="Detener">■</button></div><span class="timecode" id="durationTime">00:00.00</span></div>
   <div class="player-foot"><span>SIN ESCENAS <b id="playerSceneCount">0</b></span><span id="previewResolution">16:9 · 1920 × 1080</span></div>
+ <section class="panel timeline-panel">
+  <div class="panel-head"><div><h2>Línea de tiempo y navegación</h2><p>Controla la posición de reproducción y revisa la duración del montaje.</p></div><span class="status done">MULTIPISTA</span></div>
+  <div class="timeline-ruler"><span id="timelineCurrent">00:00.00</span><input id="timelineScrubber" type="range" min="0" max="1000" value="0"><span id="timelineEnd">00:00.00</span></div>
+  <div class="timeline-lanes"><div class="lane-label">V1 · ESCENAS</div><div class="lane-track" id="visualTrack"><span class="lane-empty">Importa imágenes y clips para construir la pista visual.</span></div><div class="lane-label">A1 · VOZ</div><div class="lane-track audio-lane" id="voiceTrack"><span class="lane-empty">La forma de onda de la narración aparecerá aquí.</span></div><div class="lane-label">A2 · MÚSICA</div><div class="lane-track audio-lane music-lane" id="musicTrack"><span class="lane-empty">Añade música de fondo para crear esta pista.</span></div><div class="lane-label">T1 · SUBTÍTULOS</div><div class="lane-track subtitle-lane" id="subtitleTrack"><span class="lane-empty">Los bloques SRT aparecerán aquí.</span></div></div>
  </section>
+  </section>
  <section class="panel scenes-panel"><div class="panel-head"><span class="step">06</span><div><h2>Escenas del proyecto</h2><p>Organiza el orden y la duración de cada escena.</p></div><span class="status" id="scenesStatus">PENDIENTE</span></div><div class="scenes-toolbar"><span>ARCHIVOS IMPORTADOS</span><b id="sceneFileCount">0 escenas</b></div><div class="scene-list" id="sceneList"><div class="scene-empty"><span>▧</span><strong>Todavía no hay escenas</strong><small>Las imágenes y clips que importes aparecerán aquí.</small></div></div></section>
  </div>
   <div class="left-workspace">
@@ -71,11 +76,7 @@
  <section class="summary-strip"><div><span>ESCENAS</span><strong id="sceneTotal">0</strong></div><div><span>SUBTÍTULOS</span><strong id="subtitleTotal">0</strong></div><div><span>DURACIÓN TOTAL</span><strong id="projectDuration">0:00</strong></div><button class="btn btn-primary create-button" id="createVideoBtn">CREAR VIDEO MP4 <span>→</span></button><a class="btn download-link" id="downloadVideoLink" href="#" download="editor-oscuro-studio.mp4" hidden>↓ DESCARGAR VIDEO MP4</a><p class="export-note">El porcentaje indica el avance de creación y conversión. Cuando comience la descarga, podrás seguir editando y preparando otro proyecto en esta pestaña.</p></section>
  </div>
  </div>
- <section class="panel timeline-panel">
-  <div class="panel-head"><span class="step">07</span><div><h2>Línea de tiempo</h2><p>Controla la posición de reproducción y revisa la duración del montaje.</p></div><span class="status done">MULTIPISTA</span></div>
-  <div class="timeline-ruler"><span id="timelineCurrent">00:00.00</span><input id="timelineScrubber" type="range" min="0" max="1000" value="0"><span id="timelineEnd">00:00.00</span></div>
-  <div class="timeline-lanes"><div class="lane-label">V1 · ESCENAS</div><div class="lane-track" id="visualTrack"><span class="lane-empty">Importa imágenes y clips para construir la pista visual.</span></div><div class="lane-label">A1 · VOZ</div><div class="lane-track audio-lane" id="voiceTrack"><span class="lane-empty">La forma de onda de la narración aparecerá aquí.</span></div><div class="lane-label">A2 · MÚSICA</div><div class="lane-track audio-lane music-lane" id="musicTrack"><span class="lane-empty">Añade música de fondo para crear esta pista.</span></div><div class="lane-label">T1 · SUBTÍTULOS</div><div class="lane-track subtitle-lane" id="subtitleTrack"><span class="lane-empty">Los bloques SRT aparecerán aquí.</span></div></div>
- </section>
+ 
  <footer class="studio-footer"><span>◈</span><b>VIDEO EDITOR PRO</b><small>ESTUDIO LOCAL DE EDICIÓN</small></footer>
 </main>
 <audio id="voiceAudio" preload="metadata"></audio><audio id="musicAudio" preload="metadata" loop></audio><div class="toast" id="toast" role="status"></div>

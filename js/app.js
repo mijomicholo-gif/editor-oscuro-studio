@@ -157,7 +157,10 @@ async function render(time=audio.currentTime||0){
   updateClock(time);
 }
 function updateClock(time){
-  $("currentTime").textContent=fmt(time);$("durationTime").textContent=fmt(totalDuration());
+  const total=totalDuration(),safeTime=Math.max(0,Math.min(Number(time)||0,total||0));
+  $("currentTime").textContent=fmt(safeTime);$("durationTime").textContent=fmt(total);
+  $("timelineCurrent").textContent=fmt(safeTime);$("timelineEnd").textContent=fmt(total);
+  const scrubber=$("timelineScrubber");scrubber.max=Math.max(1,Math.round(total*100));scrubber.value=Math.min(Number(scrubber.max),Math.round(safeTime*100));
   $("playerSceneCount").textContent=state.media.length;
   $("previewResolution").textContent=state.ratio==="16:9"?"16:9 · 1920 × 1080":"9:16 · 1080 × 1920";
 }
@@ -188,10 +191,11 @@ function updateUI(){
   $("audioName").textContent=state.audioFile?state.audioFile.name:"Aún no hay audio.";
   $("musicName").textContent=state.musicFile?state.musicFile.name:"Aún no hay música.";$("musicStatus").textContent=state.musicFile?"COMPLETADO":"PENDIENTE";$("musicStatus").classList.toggle("done",!!state.musicFile);
   $("timelineEnd").textContent=fmt(totalDuration());$("timelineCurrent").textContent=fmt(audio.currentTime||0);$("timelineScrubber").max=Math.max(1,Math.round(totalDuration()*100));$("timelineScrubber").value=Math.round((audio.currentTime||0)*100);
-  const visual=$("visualTrack");visual.innerHTML="";state.media.forEach((item,i)=>{const chip=document.createElement("button");chip.type="button";chip.className="timeline-clip";chip.textContent=String(i+1).padStart(3,"0")+" · "+item.name;chip.title=item.name;chip.onclick=()=>{pause();audio.currentTime=sceneStart(i);render(audio.currentTime);};visual.append(chip);});
-  $("voiceTrack").innerHTML=state.audioFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin narración</span>';if(state.audioFile)$("voiceTrack").firstChild.textContent=state.audioFile.name;
-  $("musicTrack").innerHTML=state.musicFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin música</span>';if(state.musicFile)$("musicTrack").firstChild.textContent=state.musicFile.name;
-  $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;$("subtitleTrack").append(chip);});
+  const total=Math.max(.1,totalDuration()),syncForTrack=state.mode==="srt"?getExactSync():null,trackTimings=syncForTrack?.ok?syncForTrack.timings:buildSceneTimings();
+  const visual=$("visualTrack");visual.innerHTML="";state.media.forEach((item,i)=>{const chip=document.createElement("button");chip.type="button";chip.className="timeline-clip";chip.textContent=String(i+1).padStart(3,"0");chip.title=item.name;const span=trackTimings[i]?Math.max(.05,trackTimings[i].end-trackTimings[i].start):(state.durations[i]||5);chip.style.flexBasis=Math.max(2,span/total*100)+"%";chip.onclick=()=>{pause();const target=sceneStart(i);if(audio.src)audio.currentTime=target;render(target);updateClock(target);};visual.append(chip);});
+  $("voiceTrack").innerHTML=state.audioFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin narración</span>';if(state.audioFile){const voice=$("voiceTrack").firstChild;voice.textContent=state.audioFile.name;voice.style.width="100%";}
+  $("musicTrack").innerHTML=state.musicFile?'<span class="timeline-audio"></span>':'<span class="lane-empty">Sin música</span>';if(state.musicFile){const musicClip=$("musicTrack").firstChild;musicClip.textContent=state.musicFile.name;musicClip.style.width="100%";}
+  $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;chip.title=fmt(cue.start)+" – "+fmt(cue.end);chip.style.flexBasis=Math.max(2,(cue.end-cue.start)/total*100)+"%";$("subtitleTrack").append(chip);});
   const syncCheck=state.mode==="srt"?getExactSync():null;
   $("syncStatus").textContent=syncCheck&&!syncCheck.ok?syncCheck.error:([state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.");
   for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(state.textName&&state.srtName)]]){
