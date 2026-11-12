@@ -45,6 +45,7 @@ function getExactSync(){
     if(found<0)return {ok:false,error:"No se encontró la escena "+(scene+1)+" del TXT dentro del SRT. Revisa que ambos archivos contengan el mismo texto y orden. No se aplicó una sincronización aproximada."};
     const first=tokens[found],last=tokens[found+wanted.length-1];
     if(!(Number.isFinite(first.start)&&Number.isFinite(last.end)&&last.end>first.start))return {ok:false,error:"Los tiempos de la escena "+(scene+1)+" no son válidos en el SRT."};
+    if(timings.length&&first.start<timings[timings.length-1].end)return {ok:false,error:"El SRT no separa temporalmente las escenas "+scene+" y "+(scene+1)+". Divide el subtítulo en el punto de cambio de imagen para evitar inventar un tiempo."};
     timings.push({start:first.start,end:last.end});cursor=found+wanted.length;
   }
   return {ok:true,timings};
@@ -67,7 +68,8 @@ function totalDuration(){
 }
 function sceneAt(time){
   const timings=buildSceneTimings();
-  if(state.mode==="srt"&&timings.length){
+  if(state.mode==="srt"){
+    if(!timings.length)return 0;
     for(let i=0;i<timings.length;i++)if(time>=timings[i].start&&time<timings[i].end)return i;
     if(time<timings[0].start)return 0;
     for(let i=0;i<timings.length-1;i++)if(time>=timings[i].end&&time<timings[i+1].start)return i;
@@ -77,11 +79,11 @@ function sceneAt(time){
   return Math.max(0,state.media.length-1);
 }
 function sceneStart(index){
-  if(state.mode==="srt"){const timing=buildSceneTimings()[index];if(timing)return timing.start;}
+  if(state.mode==="srt"){const timing=buildSceneTimings()[index];return timing?timing.start:0;}
   return state.durations.slice(0,index).reduce((a,b)=>a+b,0);
 }
 function sceneDuration(index){
-  if(state.mode==="srt"){const timing=buildSceneTimings()[index];if(timing)return Math.max(.5,timing.end-timing.start);}
+  if(state.mode==="srt"){const timing=buildSceneTimings()[index];return timing?Math.max(.05,timing.end-timing.start):.5;}
   return state.durations[index]||5;
 }
 function loadImg(url){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=url;});}
