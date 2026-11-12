@@ -258,7 +258,7 @@ async function exportMP4(){
  if(!state.media.length||!state.audioFile){toast("Importa escenas y una narración antes de exportar.");return;}
  if(state.mode!=="manual"&&!state.textLines.length){toast("Para sincronizar automáticamente carga un TXT.");return;}
  if(state.mode==="srt"&&!state.cues.length){toast("Para sincronizar exactamente carga también un SRT.");return;}
- if(state.mode==="srt"&&state.textLines.length!==state.media.length){toast(`Hay ${state.media.length} escenas y ${state.textLines.length} líneas TXT; deben coincidir.`);return;}
+ if(state.mode==="srt"){const sync=getExactSync();if(!sync.ok){toast(sync.error);return;}}
  state.exporting=true;$("exportBtn").disabled=$("createVideoBtn").disabled=true;
  const setProgress=(p,msg)=>toast(`${msg} · ${p}%`);
  let recorder=null,stream=null,audioContext=null,ffmpeg=null;
