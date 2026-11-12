@@ -1,4 +1,4 @@
-import { parseSRT } from "./srt.js";
+import { parseSRT, parseSceneText, matchScenesToSubtitles } from "./srt.js";
 
 const $ = id => document.getElementById(id);
 const audio = $("voiceAudio");
@@ -23,32 +23,14 @@ function fmt(value){
   const s=Math.max(0,Number(value)||0),m=Math.floor(s/60),sec=Math.floor(s%60),cs=Math.floor(s%1*100);
   return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}.${String(cs).padStart(2,"0")}`;
 }
-function normalizeWords(text){
-  return String(text||"").toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"").match(/[a-z0-9]+/g)||[];
-}
+let syncCache=null;
+function invalidateSync(){syncCache=null;}
 function getExactSync(){
-  if(!state.media.length)return {ok:false,error:"Importa primero las imágenes en el orden correcto."};
-  if(!state.textLines.length||!state.cues.length)return {ok:false,error:"Carga el TXT y el SRT para sincronizar las escenas."};
-  if(state.textLines.length!==state.media.length)return {ok:false,error:"El TXT tiene "+state.textLines.length+" líneas y hay "+state.media.length+" escenas. Debe existir una línea por escena."};
-  const tokens=[];
-  state.cues.forEach(cue=>normalizeWords(cue.text).forEach(word=>tokens.push({word,start:cue.start,end:cue.end})));
-  if(!tokens.length)return {ok:false,error:"El SRT no contiene palabras válidas."};
-  const timings=[];let cursor=0;
-  for(let scene=0;scene<state.textLines.length;scene++){
-    const wanted=normalizeWords(state.textLines[scene]);
-    if(!wanted.length)return {ok:false,error:"La línea "+(scene+1)+" del TXT no contiene palabras reconocibles."};
-    let found=-1;
-    search:for(let i=cursor;i<=tokens.length-wanted.length;i++){
-      for(let j=0;j<wanted.length;j++)if(tokens[i+j].word!==wanted[j])continue search;
-      found=i;break;
-    }
-    if(found<0)return {ok:false,error:"No se encontró la escena "+(scene+1)+" del TXT dentro del SRT. Revisa que ambos archivos contengan el mismo texto y orden. No se aplicó una sincronización aproximada."};
-    const first=tokens[found],last=tokens[found+wanted.length-1];
-    if(!(Number.isFinite(first.start)&&Number.isFinite(last.end)&&last.end>first.start))return {ok:false,error:"Los tiempos de la escena "+(scene+1)+" no son válidos en el SRT."};
-    if(timings.length&&first.start<timings[timings.length-1].end)return {ok:false,error:"El SRT no separa temporalmente las escenas "+scene+" y "+(scene+1)+". Divide el subtítulo en el punto de cambio de imagen para evitar inventar un tiempo."};
-    timings.push({start:first.start,end:last.end});cursor=found+wanted.length;
-  }
-  return {ok:true,timings};
+ if(syncCache)return syncCache;
+ if(!state.media.length)return syncCache={ok:false,error:"Importa primero las imágenes en el orden correcto."};
+ if(!state.textLines.length||!state.cues.length)return syncCache={ok:false,error:"Carga el TXT y el SRT para sincronizar las escenas."};
+ if(state.textLines.length!==state.media.length)return syncCache={ok:false,error:"El TXT tiene "+state.textLines.length+" escenas y hay "+state.media.length+" medios. Debe existir una línea por medio."};
+ return syncCache=matchScenesToSubtitles(state.textLines,state.cues);
 }
 function buildSceneTimings(){
   if(!state.media.length)return [];
@@ -214,11 +196,21 @@ function updateUI(){
 }
 function loadAudio(file){
   if(!file)return;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);
-  state.audioFile=file;state.audioUrl=URL.createObjectURL(file);audio.src=state.audioUrl;audio.load();audio.onloadedmetadata=()=>{updateUI();};
+  state.audioFile=file;state.audioUrl=URL.createObjectURL(file);audio.src=state.audioUrl;audio.load();audio.onloadedmetadata=()=>{invalidateSync();updateUI();render(0);};
   updateUI();toast("Narración cargada.");
 }
-async function loadTxt(file){state.textLines=(await file.text()).replace(/^\uFEFF/,"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);state.textName=file.name;updateUI();toast(`TXT cargado: ${state.textLines.length} líneas.`);}
-async function loadSrt(file){const cues=parseSRT(await file.text());if(!cues.length){toast("No se encontraron subtítulos SRT válidos.");return;}state.cues=cues;state.srtName=file.name;updateUI();render(audio.currentTime||0);toast(`SRT cargado: ${cues.length} subtítulos.`);}
+async function loadTxt(file){
+ const lines=parseSceneText(await file.text());
+ if(!lines.length){toast("El TXT no contiene escenas reconocibles.");return;}
+ state.textLines=lines;state.textName=file.name;invalidateSync();updateUI();
+ toast("Guion cargado: "+lines.length+" escenas reconocidas.");
+}
+async function loadSrt(file){
+ const cues=parseSRT(await file.text());
+ if(!cues.length){toast("No se encontraron subtítulos SRT válidos.");return;}
+ state.cues=cues;state.srtName=file.name;invalidateSync();updateUI();render(audio.currentTime||0);
+ toast("SRT cargado: "+cues.length+" bloques de subtítulos.");
+}
 function bindDrop(id,handler){const el=$(id);["dragenter","dragover"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.add("dragover");}));["dragleave","drop"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();el.classList.remove("dragover");}));el.addEventListener("drop",e=>handler(e.dataTransfer.files));}
 $("mediaBtn").onclick=()=>$("mediaInput").click();$("filesBtn").onclick=()=>$("mediaInput").click();$("folderBtn").onclick=()=>{$("mediaInput").setAttribute("webkitdirectory","");$("mediaInput").click();};$("folderVisual").onclick=e=>{e.stopPropagation();$("folderBtn").click();};
 $("mediaInput").onchange=e=>{importMedia(e.target.files);e.target.value="";e.target.removeAttribute("webkitdirectory");};
@@ -243,7 +235,7 @@ $("motionSelect").onchange=e=>{state.motion=e.target.value;render(audio.currentT
 $("qualitySelect").onchange=e=>state.quality=e.target.value;
 document.querySelectorAll("#subtitleStyles .chip").forEach(chip=>chip.onclick=()=>{document.querySelectorAll("#subtitleStyles .chip").forEach(x=>x.classList.remove("active"));chip.classList.add("active");state.subtitleStyle=chip.textContent.trim();render(audio.currentTime||0);});
 document.querySelectorAll("#wordColors .color-chip").forEach(chip=>chip.onclick=()=>{document.querySelectorAll("#wordColors .color-chip").forEach(x=>x.classList.remove("active"));chip.classList.add("active");state.highlight=chip.dataset.color;render(audio.currentTime||0);});
-$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se eliminarán los archivos cargados."))return;pause();state.media.forEach(x=>URL.revokeObjectURL(x.url));state.media=[];state.durations=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";state.selected=0;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;state.audioFile=null;audio.removeAttribute("src");audio.load();updateUI();ctx.clearRect(0,0,canvas.width,canvas.height);toast("Proyecto nuevo preparado.");};
+$("newProject").onclick=()=>{if(!confirm("¿Crear un proyecto nuevo? Se eliminarán los archivos cargados."))return;pause();state.media.forEach(x=>URL.revokeObjectURL(x.url));state.media=[];invalidateSync();state.durations=[];state.cues=[];state.textLines=[];state.textName="";state.srtName="";invalidateSync();state.selected=0;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=null;state.audioFile=null;audio.removeAttribute("src");audio.load();updateUI();ctx.clearRect(0,0,canvas.width,canvas.height);toast("Proyecto nuevo preparado.");};
 
 let lastDownloadUrl=null;
 function showVideoDownload(blob,filename){
@@ -317,5 +309,5 @@ async function exportMP4(){
  }catch(e){console.error(e);toast("No se pudo exportar: "+(e?.message||"error del navegador"));}finally{if(recorder&&recorder.state!=="inactive")try{recorder.stop();}catch{}if(audioContext&&audioContext.state!=="closed")await audioContext.close().catch(()=>{});stream?.getTracks().forEach(t=>t.stop());ffmpeg?.terminate();state.exporting=false;$("exportBtn").disabled=$("createVideoBtn").disabled=false;}
 }
 $("exportBtn").onclick=exportMP4;$("createVideoBtn").onclick=exportMP4;
-document.querySelectorAll('input[name="syncMode"]').forEach(r=>r.addEventListener("change",()=>{state.mode=r.value;updateUI();render(audio.currentTime||0);}));
+document.querySelectorAll('input[name="syncMode"]').forEach(r=>r.addEventListener("change",()=>{state.mode=r.value;invalidateSync();updateUI();render(audio.currentTime||0);}));
 updateUI();
