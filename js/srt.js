@@ -29,7 +29,7 @@ export function parseSceneText(source) {
   const structured=[...clean.matchAll(/(?:^|\n)\s*VOZ\s*:\s*([\s\S]*?)(?=\n\s*ESCENA\s+\d+\b|\n\s*RESUMEN\b|$)/gi)]
     .map(m=>m[1].trim().replace(/^["“”']|["“”']$/g,"").trim()).filter(Boolean);
   if(structured.length)return structured;
-  return clean.split("\n").map(x=>x.trim()).filter(x=>x&&!/^\s*(?:ESCENA\s+\d+|RESUMEN\b|TOTAL\s+DE\s+ESCENAS\b|DURACI[ÓO]N\s+TOTAL\b|PALABRAS\s+TOTALES\b)/i.test(x))
+  return clean.split("\n").map(x=>x.trim()).filter(x=>x&&!/^\s*(?:ESCENAS?\b|ESCENA\s+\d+|RESUMEN\b|TOTAL\s+DE\s+ESCENAS\b|DURACI[ÓO]N\s+TOTAL\b|PALABRAS\s+TOTALES\b)/i.test(x))
     .map(x=>x.replace(/^\s*\d+\s*[.|):-]\s*/,"").trim()).filter(Boolean);
 }
 function editDistance(a,b){
