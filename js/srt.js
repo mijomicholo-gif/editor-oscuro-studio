@@ -71,3 +71,29 @@ export function matchScenesToSubtitles(sceneLines,cues){
   }
   return {ok:true,timings,tokens};
 }
+
+
+/**
+ * Devuelve la escena visible para un instante de la narración.
+ * Los huecos entre intervalos se resuelven explícitamente, sin desplazar
+ * las marcas de tiempo originales del TXT/SRT.
+ */
+export function sceneIndexAtTime(timings, time, gapMode = "previous") {
+  if (!Array.isArray(timings) || timings.length === 0) return -1;
+  const t = Number(time);
+  if (!Number.isFinite(t)) return -1;
+  if (t < timings[0].start) return 0;
+
+  for (let i = 0; i < timings.length; i++) {
+    const current = timings[i];
+    if (t >= current.start && t < current.end) return i;
+
+    const next = timings[i + 1];
+    if (next && t >= current.end && t < next.start) {
+      if (gapMode === "black") return -1;
+      if (gapMode === "next") return i + 1;
+      return i;
+    }
+  }
+  return timings.length - 1;
+}
