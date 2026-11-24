@@ -1,4 +1,4 @@
-import { parseSRT, parseSceneDocument, matchScenesToSubtitles } from "./srt.js";
+import { parseSRT, parseSceneDocument, matchScenesToSubtitles } from "./srt.js?v=sync-fix-20261124-1";
 
 const $ = id => document.getElementById(id);
 const audio = $("voiceAudio");
@@ -200,7 +200,7 @@ function updateUI(){
   $("subtitleTrack").innerHTML="";state.cues.forEach(cue=>{const chip=document.createElement("span");chip.className="timeline-subtitle";chip.textContent=cue.text;chip.title=fmt(cue.start)+" – "+fmt(cue.end);chip.style.flexBasis=Math.max(2,(cue.end-cue.start)/total*100)+"%";$("subtitleTrack").append(chip);});
   const syncCheck=state.mode==="srt"?getExactSync():null;
   $("syncStatus").textContent=syncCheck&&!syncCheck.ok?syncCheck.error:(syncCheck&&syncCheck.ok?`SINCRONIZACIÓN VALIDADA · ${syncCheck.timings.length}/${state.media.length} escenas · ${fmt(syncCheck.timings[syncCheck.timings.length-1].end)} total`:[state.textName?`TXT: ${state.textLines.length} escenas`:"",state.srtName?`SRT: ${state.cues.length} subtítulos`:""].filter(Boolean).join(" · ")||"Sin archivos de sincronización.");
-  for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(state.textName&&state.srtName)]]){
+  for(const [id,done] of [["mediaStatus",!!state.media.length],["scenesStatus",!!state.media.length],["playerStatus",!!state.media.length],["audioStatus",!!state.audioFile],["syncStatusBadge",!!(syncCheck&&syncCheck.ok)]]){
     const el=$(id);el.textContent=done?"COMPLETADO":"PENDIENTE";el.classList.toggle("done",done);
   }
   $("playerEmpty").hidden=!!state.media.length;
