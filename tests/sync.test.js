@@ -68,7 +68,7 @@ test("conserva los tiempos explícitos del TXT y excluye el reencuadre",()=>{
     "REENCUADRE SUGERIDO: 00:00:10,320",
     "",
     "RESUMEN"
-  ].join("\\n");
+  ].join("\n");
   const scenes=parseSceneDocument(source);
   assert.equal(scenes.length,2);
   assert.deepEqual(scenes.map(x=>x.text),["Primera frase de prueba.","Segunda frase de prueba."]);
