@@ -322,10 +322,24 @@ async function exportMP4(){
   const mime=nativeMp4||(MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")?"video/webm;codecs=vp9,opus":"video/webm");
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:state.quality.includes("720")?3500000:6500000});
   const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};const stopped=new Promise((resolve,reject)=>{recorder.onstop=resolve;recorder.onerror=()=>reject(Error("No se pudo grabar el montaje."));});
-  const cache=await Promise.all(state.media.map(async item=>{if(item.kind==="image"){const img=new Image();img.src=item.url;await img.decode();return img;}const v=document.createElement("video");v.src=item.url;v.muted=true;v.preload="auto";await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=()=>rej(Error("No se pudo leer "+item.name));});return v;}));
+  const cache=await Promise.all(state.media.map(async item=>{if(item.kind==="image"){const img=new Image();img.src=item.url;await img.decode();return img;}const v=document.createElement("video");v.src=item.url;v.muted=true;v.playsInline=true;v.preload="auto";await new Promise((res,rej)=>{v.onloadeddata=res;v.onerror=()=>rej(Error("No se pudo leer "+item.name));});return v;}));
+  let activeExportVideo=-1;
+  async function prepareExportVideo(idx,t){
+   const v=cache[idx];if(!(v instanceof HTMLVideoElement))return;
+   const local=Math.max(0,t-sceneStart(idx));
+   if(activeExportVideo!==idx){
+    cache.forEach((item,j)=>{if(item instanceof HTMLVideoElement&&j!==idx)item.pause();});
+    v.pause();v.currentTime=Math.min(local,Math.max(0,(v.duration||.1)-.04));activeExportVideo=idx;
+    await new Promise(resolve=>{if(v.seeking){v.addEventListener("seeked",resolve,{once:true});}else resolve();});
+    await v.play().catch(()=>{});
+   }else{
+    const target=Math.min(local,Math.max(0,(v.duration||.1)-.04));
+    if(Math.abs(v.currentTime-target)>.45){v.currentTime=target;await new Promise(resolve=>{v.addEventListener("seeked",resolve,{once:true});});}
+    if(v.paused)await v.play().catch(()=>{});
+   }
+  }
   function paint(t){
    const idx=sceneAt(t),start=sceneStart(idx),span=sceneDuration(idx),m=cache[idx];
-   if(m instanceof HTMLVideoElement){const local=t-start;if(Math.abs(m.currentTime-Math.min(local,m.duration||0))>.35)m.currentTime=Math.min(local,Math.max(0,(m.duration||.1)-.05));}
    const p=Math.max(0,Math.min(1,(t-start)/span));
    const drawExportFrame=(source,alpha=1,offsetX=0,extraZoom=1)=>{const sw=source.videoWidth||source.naturalWidth,sh=source.videoHeight||source.naturalHeight;if(!sw||!sh)return;let z=extraZoom,x=offsetX,y=0;if(state.motion==="Zoom lento de acercamiento")z*=1+p*.12;if(state.motion==="Zoom lento de alejamiento")z*=1.12-p*.12;if(state.motion==="Movimiento cinematográfico")z*=1.06+p*.08;if(state.motion.includes("izquierda")){z*=1.14;x+=(.5-p)*width*.12;}if(state.motion.includes("derecha")){z*=1.14;x+=(p-.5)*width*.12;}if(state.motion.includes("arriba")){z*=1.14;y=(.5-p)*height*.12;}if(state.motion.includes("abajo")){z*=1.14;y=(p-.5)*height*.12;}const sc=Math.max(width/sw,height/sh)*z,dw=sw*sc,dh=sh*sc;c.save();c.globalAlpha=alpha;c.drawImage(source,(width-dw)/2+x,(height-dh)/2+y,dw,dh);c.restore();};
    c.fillStyle="#05070b";c.fillRect(0,0,width,height);
@@ -339,7 +353,15 @@ async function exportMP4(){
    const cue=$("includeSubtitles").checked?state.cues.find(q=>t>=q.start&&t<q.end):null;if(cue){const words=cue.text.split(/\s+/);const dur=cue.end-cue.start;const total=words.reduce((s,w)=>s+Math.max(1,w.length),0),target=(t-cue.start)/dur*total;let sum=0,active=words.length-1;for(let i=0;i<words.length;i++){sum+=Math.max(1,words[i].length);if(target<sum){active=i;break;}}const fs=width*.027;c.font=`bold ${fs}px Arial`;c.textAlign="center";c.textBaseline="middle";const text=words.join(" ");c.lineWidth=fs*.1;c.strokeStyle="#000";c.strokeText(text,width/2,height*.91);c.fillStyle="#fff";c.fillText(text,width/2,height*.91);}
   }
   const length=Math.max(decoded.duration,totalDuration());await audioContext.resume();recorder.start(250);source.start();if(musicSource)musicSource.start();const startAt=audioContext.currentTime;
-  while(audioContext.currentTime-startAt<length){const t=audioContext.currentTime-startAt;paint(t);setProgress(Math.min(65,5+Math.floor(t/length*60)),"Montando escenas");await new Promise(r=>requestAnimationFrame(r));}
+  let lastPaint=-1;
+  while(audioContext.currentTime-startAt<length){
+   const t=Math.min(length,audioContext.currentTime-startAt);
+   const frame=Math.floor(t*24);
+   if(frame!==lastPaint){const idx=sceneAt(t);await prepareExportVideo(idx,t);paint(t);lastPaint=frame;}
+   setProgress(Math.min(65,5+Math.floor(t/length*60)),"Montando escenas sincronizadas");
+   await new Promise(r=>requestAnimationFrame(r));
+  }
+  paint(length);
   recorder.stop();await stopped;stream.getTracks().forEach(t=>t.stop());await audioContext.close();audioContext=null;
   let finalBlob;
   if(nativeMp4){
