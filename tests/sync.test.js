@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseSRT, parseSceneText, normalizeWords, matchScenesToSubtitles } from "../js/srt.js";
+import { parseSRT, parseSceneText, parseSceneDocument, normalizeWords, matchScenesToSubtitles } from "../js/srt.js";
 
 test("normaliza tildes, mayúsculas y puntuación española",()=>{
   assert.deepEqual(normalizeWords("¿QUÉ ocurrió después? ¡Murió en 1700!"),["que","ocurrio","despues","murio","en","1700"]);
@@ -54,4 +54,23 @@ test("sincroniza frases por texto aunque haya tildes y varias líneas SRT",()=>{
 test("rechaza un guion que no aparece en el SRT en vez de inventar tiempos",()=>{
   const result=matchScenesToSubtitles(["Una frase completamente distinta"],parseSRT("1\n00:00:00,000 --> 00:00:02,000\nTexto que no coincide."));
   assert.equal(result.ok,false);
+});
+
+test("conserva los tiempos explícitos del TXT y excluye el reencuadre",()=>{
+  const source=[
+    "ESCENA 1 | 00:00:00,000 – 00:00:07,044 | Duración: 7,044 s",
+    "IMAGEN: 1",
+    'VOZ: "Primera frase de prueba."',
+    "",
+    "ESCENA 2 | 00:00:07,044 – 00:00:15,289 | Duración: 8,245 s",
+    "IMAGEN: 2",
+    'VOZ: "Segunda frase de prueba."',
+    "REENCUADRE SUGERIDO: 00:00:10,320",
+    "",
+    "RESUMEN"
+  ].join("\\n");
+  const scenes=parseSceneDocument(source);
+  assert.equal(scenes.length,2);
+  assert.deepEqual(scenes.map(x=>x.text),["Primera frase de prueba.","Segunda frase de prueba."]);
+  assert.deepEqual(scenes.map(x=>[x.start,x.end]),[[0,7.044],[7.044,15.289]]);
 });
