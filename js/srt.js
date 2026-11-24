@@ -27,7 +27,15 @@ export function parseSceneText(source) {
   const clean=String(source||"").replace(/^\uFEFF/,"").replace(/\r/g,"").trim();
   if(!clean)return [];
   const structured=[...clean.matchAll(/(?:^|\n)\s*VOZ\s*:\s*([\s\S]*?)(?=\n\s*ESCENA\s+\d+\b|\n\s*RESUMEN\b|$)/gi)]
-    .map(m=>m[1].trim().replace(/^["“”']|["“”']$/g,"").trim()).filter(Boolean);
+    .map(m=>m[1]
+      // Las notas de reencuadre son metadatos visuales, nunca parte de la narración.
+      .split("\n")
+      .filter(line=>!/^\s*REENCUADRE\s+SUGERIDO\s*:/i.test(line))
+      .join(" ")
+      .trim()
+      .replace(/^["“”']|["“”']$/g,"")
+      .trim())
+    .filter(Boolean);
   if(structured.length)return structured;
   return clean.split("\n").map(x=>x.trim()).filter(x=>x&&!/^\s*(?:ESCENAS?\b|ESCENA\s+\d+|RESUMEN\b|TOTAL\s+DE\s+ESCENAS\b|DURACI[ÓO]N\s+TOTAL\b|PALABRAS\s+TOTALES\b|\d+\s+ESCENAS?\b)/i.test(x))
     .map(x=>x.replace(/^\s*\d+\s*[.|):-]\s*/,"").trim()).filter(Boolean);
