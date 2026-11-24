@@ -19,6 +19,26 @@ test("reconoce líneas de escena de TXT y elimina encabezados",()=>{
   assert.deepEqual(parseSceneText("ESCENAS\n1. Primera frase completa.\n2. Segunda frase completa.\nRESUMEN\n2 escenas"),["Primera frase completa.","Segunda frase completa."]);
 });
 
+test("ignora las notas de reencuadre al extraer las frases del TXT",()=>{
+  const source=[
+    "ESCENA 1 | 00:00:00,000 – 00:00:07,044",
+    "IMAGEN: 1",
+    'VOZ: "Primera frase de la narración."',
+    "",
+    "ESCENA 2 | 00:00:07,044 – 00:00:15,289",
+    "IMAGEN: 2",
+    'VOZ: "Segunda frase de la narración."',
+    "REENCUADRE SUGERIDO: 00:00:10,320",
+    "",
+    "RESUMEN",
+    "Total de escenas: 2"
+  ].join("\n");
+  assert.deepEqual(parseSceneText(source),[
+    "Primera frase de la narración.",
+    "Segunda frase de la narración."
+  ]);
+});
+
 test("sincroniza frases por texto aunque haya tildes y varias líneas SRT",()=>{
   const txt=["¿Qué ocurrió después de la muerte?","La respuesta está en las antiguas civilizaciones."];
   const srt=parseSRT("1\n00:00:00,000 --> 00:00:03,000\n¿Qué ocurrió después\nde la muerte?\n\n2\n00:00:03,000 --> 00:00:07,000\nLa respuesta está en las antiguas\ncivilizaciones.");
