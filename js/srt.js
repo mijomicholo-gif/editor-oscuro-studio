@@ -29,34 +29,35 @@ export function parseSRT(source) {
  * explícitos del encabezado. El texto de reencuadre nunca forma parte de VOZ.
  */
 export function parseSceneDocument(source) {
-  const clean=String(source||"").replace(/^\\uFEFF/,"").replace(/\\r/g,"").trim();
+  const clean=String(source||"").replace(/^\uFEFF/,"").replace(/\r/g,"").trim();
   if(!clean)return [];
-  const timePattern="((?:\\\\d{1,2}:)?\\\\d{2}:\\\\d{2}[,.]\\\\d{1,3})";
-  const headerRe=new RegExp("^\\\\s*ESCENA\\\\s+(\\\\d+)\\\\s*\\\\|\\\\s*"+timePattern+"\\\\s*[–—-]\\\\s*"+timePattern,"i");
-  const blocks=clean.split(/(?=^\\s*ESCENA\\s+\\d+\\b)/gim).filter(x=>/^\\s*ESCENA\\s+\\d+\\b/i.test(x));
+  const blocks=clean.split(/(?=^\s*ESCENA\s+\d+\b)/gim)
+    .filter(block=>/^\s*ESCENA\s+\d+\b/i.test(block));
   const records=[];
+  const headerRe=/^\s*ESCENA\s+(\d+)\s*\|\s*((?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{1,3})\s*[–—-]\s*((?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{1,3})/i;
   for(const block of blocks){
     const header=block.match(headerRe);
-    const voice=block.match(/^\\s*VOZ\\s*:\\s*([\\s\\S]*?)(?=^\\s*(?:REENCUADRE\\s+SUGERIDO\\s*:|ESCENA\\s+\\d+\\b|RESUMEN\\b)|$)/im);
+    const voice=block.match(/^\s*VOZ\s*:\s*([\s\S]*?)(?=^\s*(?:REENCUADRE\s+SUGERIDO\s*:|ESCENA\s+\d+\b|RESUMEN\b)|$)/im);
     if(!header||!voice)continue;
-    const text=voice[1].split("\\n")
-      .filter(line=>!/^\\s*REENCUADRE\\s+SUGERIDO\\s*:/i.test(line))
-      .join(" ").trim().replace(/^[\"“”']|[\"“”']$/g,"").trim();
+    const text=voice[1].split("\n")
+      .filter(line=>! /^\s*REENCUADRE\s+SUGERIDO\s*:/i.test(line))
+      .join(" ").trim().replace(/^["“”']|["“”']$/g,"").trim();
     const start=toSeconds(header[2]),end=toSeconds(header[3]);
     if(!text||!Number.isFinite(start)||!Number.isFinite(end)||end<=start)continue;
-    const image=block.match(/^\\s*IMAGEN\\s*:\\s*(\\d+)/im);
+    const image=block.match(/^\s*IMAGEN\s*:\s*(\d+)/im);
     records.push({number:Number(header[1]),image:image?Number(image[1]):null,start,end,text});
   }
   if(records.length)return records.sort((a,b)=>a.number-b.number);
 
-  // Compatibilidad con TXT sencillos que contienen una frase por línea.
-  const legacy=[...clean.matchAll(/(?:^|\\n)\\s*VOZ\\s*:\\s*([\\s\\S]*?)(?=\\n\\s*ESCENA\\s+\\d+\\b|\\n\\s*RESUMEN\\b|$)/gi)]
-    .map(m=>m[1].split("\\n").filter(line=>!/^\\s*REENCUADRE\\s+SUGERIDO\\s*:/i.test(line)).join(" ").trim().replace(/^[\"“”']|[\"“”']$/g,"").trim())
+  const legacy=[...clean.matchAll(/(?:^|\n)\s*VOZ\s*:\s*([\s\S]*?)(?=\n\s*ESCENA\s+\d+\b|\n\s*RESUMEN\b|$)/gi)]
+    .map(match=>match[1].split("\n")
+      .filter(line=>! /^\s*REENCUADRE\s+SUGERIDO\s*:/i.test(line))
+      .join(" ").trim().replace(/^["“”']|["“”']$/g,"").trim())
     .filter(Boolean);
-  const plain=legacy.length?legacy:clean.split("\\n")
-    .map(x=>x.trim())
-    .filter(x=>x&&!/^\\s*(?:ESCENAS?\\b|ESCENA\\s+\\d+|RESUMEN\\b|TOTAL\\s+DE\\s+ESCENAS\\b|DURACI[ÓO]N\\s+TOTAL\\b|PALABRAS\\s+TOTALES\\b|\\d+\\s+ESCENAS?\\b)/i.test(x))
-    .map(x=>x.replace(/^\\s*\\d+\\s*[.|):-]\\s*/,"").trim())
+  const plain=legacy.length?legacy:clean.split("\n")
+    .map(line=>line.trim())
+    .filter(line=>line&&!/^\s*(?:ESCENAS?\b|ESCENA\s+\d+|RESUMEN\b|TOTAL\s+DE\s+ESCENAS\b|DURACI[ÓO]N\s+TOTAL\b|PALABRAS\s+TOTALES\b|\d+\s+ESCENAS?\b)/i.test(line))
+    .map(line=>line.replace(/^\s*\d+\s*[.|):-]\s*/,"").trim())
     .filter(Boolean);
   return plain.map((text,index)=>({number:index+1,image:null,start:null,end:null,text}));
 }
@@ -65,24 +66,6 @@ export function parseSceneText(source) {
   return parseSceneDocument(source).map(scene=>scene.text);
 }
 
-/* Legacy parser retained for backwards compatibility in older saved projects. */
-function parseSceneTextLegacy(source) {
-  const clean=String(source||"").replace(/^\uFEFF/,"").replace(/\r/g,"").trim();
-  if(!clean)return [];
-  const structured=[...clean.matchAll(/(?:^|\n)\s*VOZ\s*:\s*([\s\S]*?)(?=\n\s*ESCENA\s+\d+\b|\n\s*RESUMEN\b|$)/gi)]
-    .map(m=>m[1]
-      // Las notas de reencuadre son metadatos visuales, nunca parte de la narración.
-      .split("\n")
-      .filter(line=>!/^\s*REENCUADRE\s+SUGERIDO\s*:/i.test(line))
-      .join(" ")
-      .trim()
-      .replace(/^["“”']|["“”']$/g,"")
-      .trim())
-    .filter(Boolean);
-  if(structured.length)return structured;
-  return clean.split("\n").map(x=>x.trim()).filter(x=>x&&!/^\s*(?:ESCENAS?\b|ESCENA\s+\d+|RESUMEN\b|TOTAL\s+DE\s+ESCENAS\b|DURACI[ÓO]N\s+TOTAL\b|PALABRAS\s+TOTALES\b|\d+\s+ESCENAS?\b)/i.test(x))
-    .map(x=>x.replace(/^\s*\d+\s*[.|):-]\s*/,"").trim()).filter(Boolean);
-}
 function editDistance(a,b){
   let prev=Array.from({length:b.length+1},(_,i)=>i);
   for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur;}
